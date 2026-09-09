@@ -32,7 +32,7 @@ Each feature module registers auto-configuration through:
 META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
 ```
 
-Consumers normally import `claw-sdk-bom` and depend on `claw-sdk-starter`. The BOM contains only `dependencyManagement` entries and adds no runtime code; the starter contains ordinary dependencies that aggregate all SDK feature modules. Consumers can import the BOM and select individual modules when they do not want the full starter. Feature modules are guarded by `@ConditionalOnClass` and `claw.*.enabled` properties where appropriate.
+Consumers normally import `sdk-bom` and depend on `sdk-starter`. The BOM contains only `dependencyManagement` entries and adds no runtime code; the starter contains ordinary dependencies that aggregate all SDK feature modules. Consumers can import the BOM and select individual modules when they do not want the full starter. Feature modules are guarded by `@ConditionalOnClass` and `claw.*.enabled` properties where appropriate.
 
 AI model and provider integration deliberately remains the responsibility of consuming applications rather than the framework SDK.
 

@@ -12,14 +12,14 @@
     </parent>
 
     <groupId>com.iseekfree.common</groupId>
-    <artifactId>claw-sdk-webmvc-parent</artifactId>
+    <artifactId>sdk-webmvc-parent</artifactId>
     <version>${revision}</version>
     <packaging>pom</packaging>
-    <name>claw-sdk-webmvc</name>
+    <name>sdk-webmvc</name>
     <description>Spring Boot 4 WebMVC SDK for Claw services</description>
 
     <properties>
-        <revision>4.1.0_v008</revision>
+        <revision>4.1.0_v009</revision>
         <java.version>17</java.version>
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -73,42 +73,42 @@
 
             <dependency>
                 <groupId>com.iseekfree.common</groupId>
-                <artifactId>claw-sdk-common</artifactId>
+                <artifactId>sdk-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.iseekfree.common</groupId>
-                <artifactId>claw-sdk-mongo</artifactId>
+                <artifactId>sdk-mongo</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.iseekfree.common</groupId>
-                <artifactId>claw-sdk-redis</artifactId>
+                <artifactId>sdk-redis</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.iseekfree.common</groupId>
-                <artifactId>claw-sdk-web</artifactId>
+                <artifactId>sdk-web</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.iseekfree.common</groupId>
-                <artifactId>claw-sdk-grpc-common</artifactId>
+                <artifactId>sdk-grpc-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.iseekfree.common</groupId>
-                <artifactId>claw-sdk-grpc-server</artifactId>
+                <artifactId>sdk-grpc-server</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.iseekfree.common</groupId>
-                <artifactId>claw-sdk-grpc-client</artifactId>
+                <artifactId>sdk-grpc-client</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.iseekfree.common</groupId>
-                <artifactId>claw-sdk-starter</artifactId>
+                <artifactId>sdk-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

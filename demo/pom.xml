@@ -5,12 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.iseekfree.common</groupId>
-        <artifactId>claw-sdk-webmvc-parent</artifactId>
+        <artifactId>sdk-webmvc-parent</artifactId>
         <version>${revision}</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>claw-sdk-demo</artifactId>
+    <artifactId>sdk-demo</artifactId>
     <name>${project.artifactId}</name>
 
     <properties>
@@ -20,7 +20,7 @@
     <dependencies>
         <dependency>
             <groupId>com.iseekfree.common</groupId>
-            <artifactId>claw-sdk-starter</artifactId>
+            <artifactId>sdk-starter</artifactId>
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>

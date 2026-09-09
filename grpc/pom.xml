@@ -5,12 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.iseekfree.common</groupId>
-        <artifactId>claw-sdk-webmvc-parent</artifactId>
+        <artifactId>sdk-webmvc-parent</artifactId>
         <version>${revision}</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>claw-sdk-grpc</artifactId>
+    <artifactId>sdk-grpc</artifactId>
     <packaging>pom</packaging>
     <name>${project.artifactId}</name>
 

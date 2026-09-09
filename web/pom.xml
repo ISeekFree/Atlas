@@ -5,18 +5,18 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.iseekfree.common</groupId>
-        <artifactId>claw-sdk-webmvc-parent</artifactId>
+        <artifactId>sdk-webmvc-parent</artifactId>
         <version>${revision}</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>claw-sdk-web</artifactId>
+    <artifactId>sdk-web</artifactId>
     <name>${project.artifactId}</name>
 
     <dependencies>
         <dependency>
             <groupId>com.iseekfree.common</groupId>
-            <artifactId>claw-sdk-common</artifactId>
+            <artifactId>sdk-common</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

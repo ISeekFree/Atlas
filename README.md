@@ -1,4 +1,4 @@
-# claw-sdk-webmvc
+# sdk-webmvc
 
 Spring Boot 4.x SDK for WebMVC services. It provides reusable auto-configuration for:
 
@@ -27,14 +27,14 @@ Use Java 17:
 
 ## Minimal Consumer Dependency
 
-`claw-sdk-bom` only manages compatible module versions; it adds no runtime dependencies. `claw-sdk-starter` is the convenience dependency that actually brings in all SDK feature modules. Consumers that need only selected features can import the BOM and depend on individual modules instead of the starter.
+`sdk-bom` only manages compatible module versions; it adds no runtime dependencies. `sdk-starter` is the convenience dependency that actually brings in all SDK feature modules. Consumers that need only selected features can import the BOM and depend on individual modules instead of the starter.
 
 ```xml
 <dependencyManagement>
   <dependencies>
     <dependency>
       <groupId>com.iseekfree.common</groupId>
-      <artifactId>claw-sdk-bom</artifactId>
+      <artifactId>sdk-bom</artifactId>
       <version>4.1.0_v008</version>
       <type>pom</type>
       <scope>import</scope>
@@ -45,7 +45,7 @@ Use Java 17:
 <dependencies>
   <dependency>
     <groupId>com.iseekfree.common</groupId>
-    <artifactId>claw-sdk-starter</artifactId>
+    <artifactId>sdk-starter</artifactId>
   </dependency>
 </dependencies>
 ```
