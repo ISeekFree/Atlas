@@ -1,0 +1,54 @@
+server:
+  port: 0
+
+claw:
+  mongo:
+    enabled: ${CLAW_MONGO_ENABLED:false}
+    auto-index: ${CLAW_MONGO_AUTO_INDEX:true}
+    clusters:
+      primary:
+        uri: ${MONGO_PRIMARY_URI:mongodb://127.0.0.1:27017}
+        datastores:
+          catalog:
+            database: claw_demo_catalog
+            map-packages:
+              - com.iseekfree.common.sdk.demo.mongo.primary.catalog
+          audit:
+            database: claw_demo_audit
+            map-packages:
+              - com.iseekfree.common.sdk.demo.mongo.primary.audit
+      secondary:
+        uri: ${MONGO_SECONDARY_URI:mongodb://127.0.0.1:27018}
+        datastores:
+          sales:
+            database: claw_demo_sales
+            map-packages:
+              - com.iseekfree.common.sdk.demo.mongo.secondary.sales
+          archive:
+            database: claw_demo_archive
+            map-packages:
+              - com.iseekfree.common.sdk.demo.mongo.secondary.archive
+  redis:
+    enabled: ${CLAW_REDIS_ENABLED:false}
+    host: ${REDIS_HOST:127.0.0.1}
+    port: ${REDIS_PORT:6379}
+    database: ${REDIS_DATABASE:0}
+    username: ${REDIS_USERNAME:}
+    password: ${REDIS_PASSWORD:}
+    connect-timeout: 10s
+    timeout: 5s
+    pool:
+      max-active: 8
+      max-idle: 8
+      min-idle: 0
+      max-wait: -1ms
+  grpc:
+    server:
+      port: 19090
+      auth:
+        required: true
+    client:
+      channels:
+        local:
+          target: 127.0.0.1:19090
+          plaintext: true
