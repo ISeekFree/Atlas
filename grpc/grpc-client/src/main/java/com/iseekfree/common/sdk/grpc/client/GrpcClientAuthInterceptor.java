@@ -3,7 +3,7 @@ package com.iseekfree.common.sdk.grpc.client;
 import com.iseekfree.common.sdk.grpc.common.GrpcMetadataKeys;
 import com.iseekfree.common.sdk.web.context.WebContext;
 import com.iseekfree.common.sdk.web.context.WebContextHolder;
-import com.iseekfree.common.sdk.web.autoconfigure.ClawWebProperties;
+import com.iseekfree.common.sdk.web.autoconfigure.AtlasWebProperties;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -23,7 +23,7 @@ public class GrpcClientAuthInterceptor implements ClientInterceptor {
         this(null);
     }
 
-    public GrpcClientAuthInterceptor(ClawWebProperties webProperties) {
+    public GrpcClientAuthInterceptor(AtlasWebProperties webProperties) {
         if (webProperties == null) {
             this.tokenHeaders = List.of("token", "Authorization", "accessToken");
             this.adminTokenHeaders = List.of("adminToken");

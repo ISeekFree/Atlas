@@ -27,9 +27,9 @@ import java.util.List;
 
 @AutoConfiguration
 @ConditionalOnClass(DispatcherServlet.class)
-@ConditionalOnProperty(prefix = "claw.web", name = "enabled", havingValue = "true", matchIfMissing = true)
-@EnableConfigurationProperties(ClawWebProperties.class)
-public class ClawWebAutoConfiguration {
+@ConditionalOnProperty(prefix = "framework.web", name = "enabled", havingValue = "true", matchIfMissing = true)
+@EnableConfigurationProperties(AtlasWebProperties.class)
+public class AtlasWebAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
@@ -45,13 +45,13 @@ public class ClawWebAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public WebContextFactory webContextFactory(ClawWebProperties properties, List<WebContextCustomizer> customizers) {
+    public WebContextFactory webContextFactory(AtlasWebProperties properties, List<WebContextCustomizer> customizers) {
         return new WebContextFactory(properties, customizers);
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public WebAuthInterceptor webAuthInterceptor(ClawWebProperties properties, WebContextFactory contextFactory, AuthService authService) {
+    public WebAuthInterceptor webAuthInterceptor(AtlasWebProperties properties, WebContextFactory contextFactory, AuthService authService) {
         return new WebAuthInterceptor(properties, contextFactory, authService);
     }
 
@@ -62,7 +62,7 @@ public class ClawWebAutoConfiguration {
     }
 
     @Bean
-    public WebMvcConfigurer webMvcConfigurer(WebAuthInterceptor webAuthInterceptor, WebContextArgumentResolver argumentResolver, ClawWebProperties properties) {
+    public WebMvcConfigurer webMvcConfigurer(WebAuthInterceptor webAuthInterceptor, WebContextArgumentResolver argumentResolver, AtlasWebProperties properties) {
         return new WebMvcConfigurer() {
             @Override
             public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
@@ -85,7 +85,7 @@ public class ClawWebAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public ApiResponseAdvice apiResponseAdvice(ClawWebProperties properties) {
+    public ApiResponseAdvice apiResponseAdvice(AtlasWebProperties properties) {
         return new ApiResponseAdvice(properties);
     }
 

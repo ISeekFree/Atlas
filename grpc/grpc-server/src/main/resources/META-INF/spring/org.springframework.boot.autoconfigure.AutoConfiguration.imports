@@ -1,1 +1,1 @@
-com.iseekfree.common.sdk.grpc.server.autoconfigure.ClawGrpcServerAutoConfiguration
+com.iseekfree.common.sdk.grpc.server.autoconfigure.AtlasGrpcServerAutoConfiguration

@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 @Service
-@ConditionalOnProperty(prefix = "claw.mongo", name = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "framework.mongo", name = "enabled", havingValue = "true")
 public class AuditEventService {
 
     private final Datastore datastore;

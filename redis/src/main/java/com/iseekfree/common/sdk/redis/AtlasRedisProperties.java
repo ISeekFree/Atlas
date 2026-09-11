@@ -4,8 +4,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
 
-@ConfigurationProperties("claw.redis")
-public class ClawRedisProperties {
+@ConfigurationProperties("framework.redis")
+public class AtlasRedisProperties {
 
     private boolean enabled = true;
     private String keyPrefix = "";

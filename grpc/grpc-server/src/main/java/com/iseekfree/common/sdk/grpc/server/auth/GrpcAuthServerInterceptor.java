@@ -5,7 +5,7 @@ import com.iseekfree.common.sdk.common.auth.AuthRequest;
 import com.iseekfree.common.sdk.common.auth.AuthService;
 import com.iseekfree.common.sdk.grpc.common.GrpcAuthContext;
 import com.iseekfree.common.sdk.grpc.common.GrpcMetadataKeys;
-import com.iseekfree.common.sdk.grpc.server.autoconfigure.ClawGrpcServerProperties;
+import com.iseekfree.common.sdk.grpc.server.autoconfigure.AtlasGrpcServerProperties;
 import io.grpc.Context;
 import io.grpc.Contexts;
 import io.grpc.Grpc;
@@ -17,10 +17,10 @@ import io.grpc.Status;
 
 public class GrpcAuthServerInterceptor implements ServerInterceptor {
 
-    private final ClawGrpcServerProperties properties;
+    private final AtlasGrpcServerProperties properties;
     private final AuthService authService;
 
-    public GrpcAuthServerInterceptor(ClawGrpcServerProperties properties, AuthService authService) {
+    public GrpcAuthServerInterceptor(AtlasGrpcServerProperties properties, AuthService authService) {
         this.properties = properties;
         this.authService = authService;
     }

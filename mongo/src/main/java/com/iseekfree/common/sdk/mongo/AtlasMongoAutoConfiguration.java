@@ -23,17 +23,17 @@ import java.util.Set;
 
 @AutoConfiguration
 @ConditionalOnClass(Morphia.class)
-@ConditionalOnProperty(prefix = "claw.mongo", name = "enabled", havingValue = "true", matchIfMissing = true)
-@EnableConfigurationProperties(ClawMongoProperties.class)
+@ConditionalOnProperty(prefix = "framework.mongo", name = "enabled", havingValue = "true", matchIfMissing = true)
+@EnableConfigurationProperties(AtlasMongoProperties.class)
 @Import(MongoDatastoreBeanRegistrar.class)
-public class ClawMongoAutoConfiguration {
+public class AtlasMongoAutoConfiguration {
 
     public static final String DEFAULT_DATASTORE = "default";
     public static final String DEFAULT_CLUSTER = "default";
 
     @Bean
     @ConditionalOnMissingBean
-    public MongoClusterRegistry mongoClusterRegistry(ClawMongoProperties properties) {
+    public MongoClusterRegistry mongoClusterRegistry(AtlasMongoProperties properties) {
         Map<String, ClusterDefinition> definitions = clusterDefinitions(properties);
         Map<String, MongoClient> clients = new LinkedHashMap<>();
         Set<String> ownedClientNames = new LinkedHashSet<>();
@@ -65,7 +65,7 @@ public class ClawMongoAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public MorphiaDatastoreRegistry morphiaDatastoreRegistry(MongoClusterRegistry clusterRegistry, MapperOptions mapperOptions, ClawMongoProperties properties) {
+    public MorphiaDatastoreRegistry morphiaDatastoreRegistry(MongoClusterRegistry clusterRegistry, MapperOptions mapperOptions, AtlasMongoProperties properties) {
         Map<String, ClusterDefinition> clusters = clusterDefinitions(properties);
         Map<String, Datastore> datastores = new LinkedHashMap<>();
         Map<String, String> datastoreClusters = new LinkedHashMap<>();
@@ -137,7 +137,7 @@ public class ClawMongoAutoConfiguration {
         }
     }
 
-    static Map<String, ClusterDefinition> clusterDefinitions(ClawMongoProperties properties) {
+    static Map<String, ClusterDefinition> clusterDefinitions(AtlasMongoProperties properties) {
         Map<String, ClusterDefinition> definitions = new LinkedHashMap<>();
         if (shouldCreateDefaultCluster(properties)) {
             definitions.put(DEFAULT_CLUSTER, defaultCluster(properties));
@@ -164,7 +164,7 @@ public class ClawMongoAutoConfiguration {
         return definitions;
     }
 
-    private static boolean shouldCreateDefaultCluster(ClawMongoProperties properties) {
+    private static boolean shouldCreateDefaultCluster(AtlasMongoProperties properties) {
         if (properties.getClusters().isEmpty()) {
             return true;
         }
@@ -178,7 +178,7 @@ public class ClawMongoAutoConfiguration {
                 .anyMatch(datastore -> firstNonBlank(datastore.getCluster(), DEFAULT_CLUSTER).equals(DEFAULT_CLUSTER));
     }
 
-    private static ClusterDefinition defaultCluster(ClawMongoProperties properties) {
+    private static ClusterDefinition defaultCluster(AtlasMongoProperties properties) {
         return new ClusterDefinition(
                 properties.getUri(),
                 properties.isAutoIndex(),
@@ -186,7 +186,7 @@ public class ClawMongoAutoConfiguration {
         );
     }
 
-    private static ClusterDefinition mergeDefaultCluster(ClusterDefinition base, ClawMongoProperties.Cluster override) {
+    private static ClusterDefinition mergeDefaultCluster(ClusterDefinition base, AtlasMongoProperties.Cluster override) {
         return new ClusterDefinition(
                 firstNonBlank(override.getUri(), base.uri()),
                 resolveAutoIndex(override.getAutoIndex(), base.autoIndex()),
@@ -216,7 +216,7 @@ public class ClawMongoAutoConfiguration {
         return configured == null ? inherited : configured;
     }
 
-    static Set<String> datastoreNames(ClawMongoProperties properties) {
+    static Set<String> datastoreNames(AtlasMongoProperties properties) {
         Set<String> names = new LinkedHashSet<>();
         if (usesLegacyDefaultDatastore(properties)) {
             addDatastoreName(names, DEFAULT_DATASTORE);
@@ -227,7 +227,7 @@ public class ClawMongoAutoConfiguration {
         return names;
     }
 
-    private static boolean usesLegacyDefaultDatastore(ClawMongoProperties properties) {
+    private static boolean usesLegacyDefaultDatastore(AtlasMongoProperties properties) {
         return properties.getClusters().isEmpty() || !properties.getMapPackages().isEmpty();
     }
 
@@ -238,6 +238,6 @@ public class ClawMongoAutoConfiguration {
         }
     }
 
-    record ClusterDefinition(String uri, boolean autoIndex, Map<String, ClawMongoProperties.Datastore> datastores) {
+    record ClusterDefinition(String uri, boolean autoIndex, Map<String, AtlasMongoProperties.Datastore> datastores) {
     }
 }

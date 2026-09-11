@@ -13,11 +13,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = {
-        "claw.mongo.enabled=true",
-        "claw.mongo.auto-index=false",
-        "claw.redis.enabled=false",
-        "claw.grpc.server.enabled=false",
-        "claw.grpc.client.enabled=false"
+        "framework.mongo.enabled=true",
+        "framework.mongo.auto-index=false",
+        "framework.redis.enabled=false",
+        "framework.grpc.server.enabled=false",
+        "framework.grpc.client.enabled=false"
 })
 class DemoMongoMultiClusterContextTests {
 
@@ -51,10 +51,10 @@ class DemoMongoMultiClusterContextTests {
 
     @Test
     void injectsEachNamedDatastoreIntoItsService() {
-        assertThat(catalog.getDatabase().getName()).isEqualTo("claw_demo_catalog");
-        assertThat(audit.getDatabase().getName()).isEqualTo("claw_demo_audit");
-        assertThat(sales.getDatabase().getName()).isEqualTo("claw_demo_sales");
-        assertThat(archive.getDatabase().getName()).isEqualTo("claw_demo_archive");
+        assertThat(catalog.getDatabase().getName()).isEqualTo("framework_demo_catalog");
+        assertThat(audit.getDatabase().getName()).isEqualTo("framework_demo_audit");
+        assertThat(sales.getDatabase().getName()).isEqualTo("framework_demo_sales");
+        assertThat(archive.getDatabase().getName()).isEqualTo("framework_demo_archive");
         assertThat(catalogProductService).isNotNull();
         assertThat(auditEventService).isNotNull();
         assertThat(salesOrderService).isNotNull();

@@ -24,14 +24,14 @@ public class MongoDatastoreBeanRegistrar implements ImportBeanDefinitionRegistra
 
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-        ClawMongoProperties properties = Binder.get(environment)
-                .bind("claw.mongo", Bindable.of(ClawMongoProperties.class))
-                .orElseGet(ClawMongoProperties::new);
+        AtlasMongoProperties properties = Binder.get(environment)
+                .bind("framework.mongo", Bindable.of(AtlasMongoProperties.class))
+                .orElseGet(AtlasMongoProperties::new);
         if (!properties.isEnabled()) {
             return;
         }
 
-        for (String datastoreName : ClawMongoAutoConfiguration.datastoreNames(properties)) {
+        for (String datastoreName : AtlasMongoAutoConfiguration.datastoreNames(properties)) {
             if (registry.containsBeanDefinition(datastoreName) || registry.isAlias(datastoreName)) {
                 throw new BeanDefinitionStoreException("Cannot register Mongo datastore bean '"
                         + datastoreName + "' because that bean name is already in use");

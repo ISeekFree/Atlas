@@ -1,6 +1,6 @@
 package com.iseekfree.common.sdk.grpc.server;
 
-import com.iseekfree.common.sdk.grpc.server.autoconfigure.ClawGrpcServerProperties;
+import com.iseekfree.common.sdk.grpc.server.autoconfigure.AtlasGrpcServerProperties;
 import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerInterceptor;
@@ -20,13 +20,13 @@ import java.util.List;
 
 public class GrpcServerLifecycle implements SmartLifecycle {
 
-    private final ClawGrpcServerProperties properties;
+    private final AtlasGrpcServerProperties properties;
     private final Collection<BindableService> bindableServices;
     private final List<ServerInterceptor> interceptors;
     private Server server;
     private boolean running;
 
-    public GrpcServerLifecycle(ClawGrpcServerProperties properties, Collection<BindableService> bindableServices, List<ServerInterceptor> interceptors) {
+    public GrpcServerLifecycle(AtlasGrpcServerProperties properties, Collection<BindableService> bindableServices, List<ServerInterceptor> interceptors) {
         this.properties = properties;
         this.bindableServices = bindableServices;
         this.interceptors = new ArrayList<>(interceptors);

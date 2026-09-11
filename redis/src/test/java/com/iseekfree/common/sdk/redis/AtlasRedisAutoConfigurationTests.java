@@ -12,28 +12,28 @@ import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ClawRedisAutoConfigurationTests {
+class AtlasRedisAutoConfigurationTests {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-            .withConfiguration(AutoConfigurations.of(ClawRedisAutoConfiguration.class));
+            .withConfiguration(AutoConfigurations.of(AtlasRedisAutoConfiguration.class));
 
     @Test
-    void bindsAllConnectionSettingsFromClawRedisProperties() {
+    void bindsAllConnectionSettingsFromAtlasRedisProperties() {
         contextRunner.withPropertyValues(
-                "claw.redis.host=redis.internal",
-                "claw.redis.port=6380",
-                "claw.redis.database=3",
-                "claw.redis.username=app",
-                "claw.redis.password=secret",
-                "claw.redis.client-name=claw-sdk-test",
-                "claw.redis.connect-timeout=2s",
-                "claw.redis.timeout=4s",
-                "claw.redis.shutdown-timeout=200ms",
-                "claw.redis.pool.max-active=32",
-                "claw.redis.pool.max-idle=12",
-                "claw.redis.pool.min-idle=2",
-                "claw.redis.pool.max-wait=3s",
-                "claw.redis.pool.time-between-eviction-runs=30s"
+                "framework.redis.host=redis.internal",
+                "framework.redis.port=6380",
+                "framework.redis.database=3",
+                "framework.redis.username=app",
+                "framework.redis.password=secret",
+                "framework.redis.client-name=atlas-sdk-test",
+                "framework.redis.connect-timeout=2s",
+                "framework.redis.timeout=4s",
+                "framework.redis.shutdown-timeout=200ms",
+                "framework.redis.pool.max-active=32",
+                "framework.redis.pool.max-idle=12",
+                "framework.redis.pool.min-idle=2",
+                "framework.redis.pool.max-wait=3s",
+                "framework.redis.pool.time-between-eviction-runs=30s"
         ).run(context -> {
             assertThat(context).hasNotFailed();
             assertThat(context).hasBean("redisConnectionFactory");
@@ -41,7 +41,7 @@ class ClawRedisAutoConfigurationTests {
             assertThat(context).hasBean("redisTemplate");
             assertThat(context).hasBean("redisKey");
 
-            ClawRedisProperties properties = context.getBean(ClawRedisProperties.class);
+            AtlasRedisProperties properties = context.getBean(AtlasRedisProperties.class);
             assertThat(properties.getHost()).isEqualTo("redis.internal");
             assertThat(properties.getPort()).isEqualTo(6380);
             assertThat(properties.getDatabase()).isEqualTo(3);
@@ -67,15 +67,15 @@ class ClawRedisAutoConfigurationTests {
     }
 
     @Test
-    void createsNoRedisInfrastructureWhenClawRedisIsDisabled() {
+    void createsNoRedisInfrastructureWhenAtlasRedisIsDisabled() {
         contextRunner.withPropertyValues(
-                "claw.redis.enabled=false",
+                "framework.redis.enabled=false",
                 "spring.data.redis.host=legacy-config-must-not-be-used"
         ).run(context -> {
             assertThat(context).hasNotFailed();
             assertThat(context).doesNotHaveBean(RedisConnectionFactory.class);
             assertThat(context).doesNotHaveBean(RedisTemplate.class);
-            assertThat(context).doesNotHaveBean(ClawRedisKey.class);
+            assertThat(context).doesNotHaveBean(AtlasRedisKey.class);
         });
     }
 }

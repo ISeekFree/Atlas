@@ -3,7 +3,7 @@ package com.iseekfree.common.sdk.grpc.client.autoconfigure;
 import com.iseekfree.common.sdk.grpc.client.GrpcChannelFactory;
 import com.iseekfree.common.sdk.grpc.client.GrpcClientAuthInterceptor;
 import com.iseekfree.common.sdk.grpc.client.inject.GrpcClientBeanPostProcessor;
-import com.iseekfree.common.sdk.web.autoconfigure.ClawWebProperties;
+import com.iseekfree.common.sdk.web.autoconfigure.AtlasWebProperties;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -20,20 +20,20 @@ import java.util.List;
 
 @AutoConfiguration
 @ConditionalOnClass(ManagedChannel.class)
-@ConditionalOnProperty(prefix = "claw.grpc.client", name = "enabled", havingValue = "true", matchIfMissing = true)
-@EnableConfigurationProperties(ClawGrpcClientProperties.class)
-public class ClawGrpcClientAutoConfiguration {
+@ConditionalOnProperty(prefix = "framework.grpc.client", name = "enabled", havingValue = "true", matchIfMissing = true)
+@EnableConfigurationProperties(AtlasGrpcClientProperties.class)
+public class AtlasGrpcClientAutoConfiguration {
 
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE + 20)
     @ConditionalOnMissingBean
-    public ClientInterceptor grpcClientAuthInterceptor(ObjectProvider<ClawWebProperties> webProperties) {
+    public ClientInterceptor grpcClientAuthInterceptor(ObjectProvider<AtlasWebProperties> webProperties) {
         return new GrpcClientAuthInterceptor(webProperties.getIfAvailable());
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public GrpcChannelFactory grpcChannelFactory(ClawGrpcClientProperties properties, List<ClientInterceptor> interceptors) {
+    public GrpcChannelFactory grpcChannelFactory(AtlasGrpcClientProperties properties, List<ClientInterceptor> interceptors) {
         return new GrpcChannelFactory(properties, interceptors);
     }
 

@@ -16,10 +16,10 @@
     <version>${revision}</version>
     <packaging>pom</packaging>
     <name>sdk-webmvc</name>
-    <description>Spring Boot 4 WebMVC SDK for Claw services</description>
+    <description>Spring Boot 4 WebMVC SDK for Atlas services</description>
 
     <properties>
-        <revision>4.1.0_v009</revision>
+        <revision>4.1.0_v010</revision>
         <java.version>17</java.version>
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

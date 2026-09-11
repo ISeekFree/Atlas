@@ -1,6 +1,6 @@
 package com.iseekfree.common.sdk.grpc.client;
 
-import com.iseekfree.common.sdk.grpc.client.autoconfigure.ClawGrpcClientProperties;
+import com.iseekfree.common.sdk.grpc.client.autoconfigure.AtlasGrpcClientProperties;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
 import io.grpc.ClientInterceptors;
@@ -17,11 +17,11 @@ import java.util.concurrent.TimeUnit;
 
 public class GrpcChannelFactory implements DisposableBean {
 
-    private final ClawGrpcClientProperties properties;
+    private final AtlasGrpcClientProperties properties;
     private final List<ClientInterceptor> interceptors;
     private final Map<String, ManagedChannel> channels = new LinkedHashMap<>();
 
-    public GrpcChannelFactory(ClawGrpcClientProperties properties, List<ClientInterceptor> interceptors) {
+    public GrpcChannelFactory(AtlasGrpcClientProperties properties, List<ClientInterceptor> interceptors) {
         this.properties = properties;
         this.interceptors = new ArrayList<>(interceptors);
         AnnotationAwareOrderComparator.sort(this.interceptors);
@@ -40,9 +40,9 @@ public class GrpcChannelFactory implements DisposableBean {
     }
 
     private ManagedChannel createManagedChannel(String name) {
-        ClawGrpcClientProperties.Channel config = properties.getChannels().get(name);
+        AtlasGrpcClientProperties.Channel config = properties.getChannels().get(name);
         if (config == null || config.getTarget() == null || config.getTarget().isBlank()) {
-            throw new IllegalArgumentException("Missing claw.grpc.client.channels." + name + ".target");
+            throw new IllegalArgumentException("Missing framework.grpc.client.channels." + name + ".target");
         }
         ManagedChannelBuilder<?> builder = ManagedChannelBuilder.forTarget(config.getTarget());
         if (config.isPlaintext()) {

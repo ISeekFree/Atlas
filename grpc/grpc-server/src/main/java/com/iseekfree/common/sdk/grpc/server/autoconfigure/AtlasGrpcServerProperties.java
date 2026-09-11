@@ -2,8 +2,8 @@ package com.iseekfree.common.sdk.grpc.server.autoconfigure;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties("claw.grpc.server")
-public class ClawGrpcServerProperties {
+@ConfigurationProperties("framework.grpc.server")
+public class AtlasGrpcServerProperties {
 
     private boolean enabled = true;
     private int port = 9090;

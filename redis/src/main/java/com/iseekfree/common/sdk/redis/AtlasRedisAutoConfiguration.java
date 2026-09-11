@@ -26,13 +26,13 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @AutoConfiguration
 @ConditionalOnClass(RedisTemplate.class)
-@ConditionalOnProperty(prefix = "claw.redis", name = "enabled", havingValue = "true", matchIfMissing = true)
-@EnableConfigurationProperties(ClawRedisProperties.class)
-public class ClawRedisAutoConfiguration {
+@ConditionalOnProperty(prefix = "framework.redis", name = "enabled", havingValue = "true", matchIfMissing = true)
+@EnableConfigurationProperties(AtlasRedisProperties.class)
+public class AtlasRedisAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public RedisConnectionFactory redisConnectionFactory(ClawRedisProperties properties) {
+    public RedisConnectionFactory redisConnectionFactory(AtlasRedisProperties properties) {
         RedisStandaloneConfiguration standalone = new RedisStandaloneConfiguration(properties.getHost(), properties.getPort());
         standalone.setDatabase(properties.getDatabase());
         if (hasText(properties.getUsername())) {
@@ -75,11 +75,11 @@ public class ClawRedisAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public ClawRedisKey redisKey(ClawRedisProperties properties) {
-        return new ClawRedisKey(properties);
+    public AtlasRedisKey redisKey(AtlasRedisProperties properties) {
+        return new AtlasRedisKey(properties);
     }
 
-    private LettuceClientConfiguration clientConfiguration(ClawRedisProperties properties) {
+    private LettuceClientConfiguration clientConfiguration(AtlasRedisProperties properties) {
         LettuceClientConfiguration.LettuceClientConfigurationBuilder builder;
         if (properties.getPool().isEnabled()) {
             builder = LettucePoolingClientConfiguration.builder().poolConfig(poolConfig(properties.getPool()));
@@ -107,7 +107,7 @@ public class ClawRedisAutoConfiguration {
         return sslBuilder.build();
     }
 
-    private GenericObjectPoolConfig<StatefulConnection<?, ?>> poolConfig(ClawRedisProperties.Pool properties) {
+    private GenericObjectPoolConfig<StatefulConnection<?, ?>> poolConfig(AtlasRedisProperties.Pool properties) {
         GenericObjectPoolConfig<StatefulConnection<?, ?>> poolConfig = new GenericObjectPoolConfig<>();
         poolConfig.setMaxTotal(properties.getMaxActive());
         poolConfig.setMaxIdle(properties.getMaxIdle());

@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public final class GrpcAuthContext {
 
-    public static final Context.Key<AuthIdentity> IDENTITY = Context.key("claw-auth-identity");
+    public static final Context.Key<AuthIdentity> IDENTITY = Context.key("atlas-auth-identity");
     public static final Context.Key<String> USER_ID = Context.key("uid");
     public static final Context.Key<String> DOMAIN = Context.key("domain");
     public static final Context.Key<String> IP = Context.key("ip");

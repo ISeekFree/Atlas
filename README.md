@@ -35,7 +35,7 @@ Use Java 17:
     <dependency>
       <groupId>com.iseekfree.common</groupId>
       <artifactId>sdk-bom</artifactId>
-      <version>4.1.0_v008</version>
+      <version>4.1.0_v010</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
@@ -55,6 +55,6 @@ Override `AuthService` in the consuming app to connect `@AuthRequired`, WebConte
 ## Extension Points
 
 - Register a `WebContextCustomizer` bean to add business attributes to `WebContext`.
-- Configure MongoDB with `claw.mongo.clusters.*` for multiple independent Mongo clusters. Define all databases and mapped packages under each cluster's explicit `datastores` map; datastore names must be globally unique.
+- Configure MongoDB with `framework.mongo.clusters.*` for multiple independent Mongo clusters. Define all databases and mapped packages under each cluster's explicit `datastores` map; datastore names must be globally unique.
 
 The runnable multi-cluster Mongo example is in `demo/src/main/resources/application.yaml`. It contains two clusters, two databases per cluster, two collections per database, automatic unique/compound/TTL index examples, and qualified `Datastore` injection into separate services.

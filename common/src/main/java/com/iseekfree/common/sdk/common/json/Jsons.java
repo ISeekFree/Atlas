@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.iseekfree.common.sdk.common.exception.ClawException;
+import com.iseekfree.common.sdk.common.exception.AtlasException;
 
 public final class Jsons {
 
@@ -20,7 +20,7 @@ public final class Jsons {
         try {
             return OBJECT_MAPPER.writeValueAsString(value);
         } catch (JsonProcessingException ex) {
-            throw new ClawException(500, "JSON serialization failed", ex);
+            throw new AtlasException(500, "JSON serialization failed", ex);
         }
     }
 
@@ -28,7 +28,7 @@ public final class Jsons {
         try {
             return OBJECT_MAPPER.readValue(value, type);
         } catch (JsonProcessingException ex) {
-            throw new ClawException(500, "JSON deserialization failed", ex);
+            throw new AtlasException(500, "JSON deserialization failed", ex);
         }
     }
 }

@@ -2,11 +2,11 @@ package com.iseekfree.common.sdk.web.mvc;
 
 import com.iseekfree.common.sdk.common.auth.AuthIdentity;
 import com.iseekfree.common.sdk.common.auth.AuthService;
-import com.iseekfree.common.sdk.common.exception.ClawException;
+import com.iseekfree.common.sdk.common.exception.AtlasException;
 import com.iseekfree.common.sdk.common.exception.UnauthorizedException;
 import com.iseekfree.common.sdk.common.json.Jsons;
 import com.iseekfree.common.sdk.common.web.Response;
-import com.iseekfree.common.sdk.web.autoconfigure.ClawWebProperties;
+import com.iseekfree.common.sdk.web.autoconfigure.AtlasWebProperties;
 import com.iseekfree.common.sdk.web.context.AuthRequired;
 import com.iseekfree.common.sdk.web.context.WebContext;
 import com.iseekfree.common.sdk.web.context.WebContextFactory;
@@ -23,13 +23,13 @@ import java.util.Arrays;
 
 public class WebAuthInterceptor implements HandlerInterceptor {
 
-    public static final String REQ_START_TIME = "__claw_req_start__";
+    public static final String REQ_START_TIME = "__atlas_req_start__";
 
-    private final ClawWebProperties properties;
+    private final AtlasWebProperties properties;
     private final WebContextFactory contextFactory;
     private final AuthService authService;
 
-    public WebAuthInterceptor(ClawWebProperties properties, WebContextFactory contextFactory, AuthService authService) {
+    public WebAuthInterceptor(AtlasWebProperties properties, WebContextFactory contextFactory, AuthService authService) {
         this.properties = properties;
         this.contextFactory = contextFactory;
         this.authService = authService;
@@ -73,7 +73,7 @@ public class WebAuthInterceptor implements HandlerInterceptor {
                 throw new UnauthorizedException("No permission");
             }
             return true;
-        } catch (ClawException ex) {
+        } catch (AtlasException ex) {
             writeFailure(response, ex.getCode(), ex.getMessage());
             return false;
         } catch (RuntimeException ex) {

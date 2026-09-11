@@ -2,7 +2,7 @@ package com.iseekfree.common.sdk.web.mvc;
 
 import com.iseekfree.common.sdk.common.json.Jsons;
 import com.iseekfree.common.sdk.common.web.Response;
-import com.iseekfree.common.sdk.web.autoconfigure.ClawWebProperties;
+import com.iseekfree.common.sdk.web.autoconfigure.AtlasWebProperties;
 import org.reactivestreams.Publisher;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
@@ -18,9 +18,9 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 @RestControllerAdvice
 public class ApiResponseAdvice implements ResponseBodyAdvice<Object> {
 
-    private final ClawWebProperties properties;
+    private final AtlasWebProperties properties;
 
-    public ApiResponseAdvice(ClawWebProperties properties) {
+    public ApiResponseAdvice(AtlasWebProperties properties) {
         this.properties = properties;
     }
 

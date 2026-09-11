@@ -19,20 +19,20 @@ import java.util.List;
 
 @AutoConfiguration
 @ConditionalOnClass(BindableService.class)
-@ConditionalOnProperty(prefix = "claw.grpc.server", name = "enabled", havingValue = "true", matchIfMissing = true)
-@EnableConfigurationProperties(ClawGrpcServerProperties.class)
-public class ClawGrpcServerAutoConfiguration {
+@ConditionalOnProperty(prefix = "framework.grpc.server", name = "enabled", havingValue = "true", matchIfMissing = true)
+@EnableConfigurationProperties(AtlasGrpcServerProperties.class)
+public class AtlasGrpcServerAutoConfiguration {
 
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE + 20)
-    @ConditionalOnProperty(prefix = "claw.grpc.server.auth", name = "enabled", havingValue = "true", matchIfMissing = true)
-    public ServerInterceptor grpcAuthServerInterceptor(ClawGrpcServerProperties properties, AuthService authService) {
+    @ConditionalOnProperty(prefix = "framework.grpc.server.auth", name = "enabled", havingValue = "true", matchIfMissing = true)
+    public ServerInterceptor grpcAuthServerInterceptor(AtlasGrpcServerProperties properties, AuthService authService) {
         return new GrpcAuthServerInterceptor(properties, authService);
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public GrpcServerLifecycle grpcServerLifecycle(ClawGrpcServerProperties properties, Collection<BindableService> bindableServices, List<ServerInterceptor> interceptors) {
+    public GrpcServerLifecycle grpcServerLifecycle(AtlasGrpcServerProperties properties, Collection<BindableService> bindableServices, List<ServerInterceptor> interceptors) {
         return new GrpcServerLifecycle(properties, bindableServices, interceptors);
     }
 }

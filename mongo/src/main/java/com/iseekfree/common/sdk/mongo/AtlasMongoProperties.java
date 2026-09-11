@@ -7,12 +7,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@ConfigurationProperties("claw.mongo")
-public class ClawMongoProperties {
+@ConfigurationProperties("framework.mongo")
+public class AtlasMongoProperties {
 
     private boolean enabled = true;
     private String uri = "mongodb://127.0.0.1:27017";
-    private String database = "claw";
+    private String database = "atlas";
     private boolean autoIndex = true;
     private final List<String> mapPackages = new ArrayList<>();
     private final Map<String, Datastore> datastores = new LinkedHashMap<>();

@@ -1,10 +1,10 @@
 package com.iseekfree.common.sdk.redis;
 
-public class ClawRedisKey {
+public class AtlasRedisKey {
 
-    private final ClawRedisProperties properties;
+    private final AtlasRedisProperties properties;
 
-    public ClawRedisKey(ClawRedisProperties properties) {
+    public AtlasRedisKey(AtlasRedisProperties properties) {
         this.properties = properties;
     }
 

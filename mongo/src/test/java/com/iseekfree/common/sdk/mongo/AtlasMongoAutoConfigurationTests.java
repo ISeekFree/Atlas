@@ -10,21 +10,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class ClawMongoAutoConfigurationTests {
+class AtlasMongoAutoConfigurationTests {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-            .withConfiguration(AutoConfigurations.of(ClawMongoAutoConfiguration.class));
+            .withConfiguration(AutoConfigurations.of(AtlasMongoAutoConfiguration.class));
 
     @Test
     void createsMultipleClustersAndDatabasesWithoutAnImplicitDefaultCluster() {
         contextRunner.withPropertyValues(
-                "claw.mongo.auto-index=false",
-                "claw.mongo.clusters.primary.uri=mongodb://127.0.0.1:27017",
-                "claw.mongo.clusters.primary.datastores.catalog.database=catalog",
-                "claw.mongo.clusters.primary.datastores.audit.database=audit",
-                "claw.mongo.clusters.secondary.uri=mongodb://127.0.0.1:27018",
-                "claw.mongo.clusters.secondary.datastores.sales.database=sales",
-                "claw.mongo.clusters.secondary.datastores.archive.database=archive"
+                "framework.mongo.auto-index=false",
+                "framework.mongo.clusters.primary.uri=mongodb://127.0.0.1:27017",
+                "framework.mongo.clusters.primary.datastores.catalog.database=catalog",
+                "framework.mongo.clusters.primary.datastores.audit.database=audit",
+                "framework.mongo.clusters.secondary.uri=mongodb://127.0.0.1:27018",
+                "framework.mongo.clusters.secondary.datastores.sales.database=sales",
+                "framework.mongo.clusters.secondary.datastores.archive.database=archive"
         ).run(context -> {
             assertThat(context).hasNotFailed();
 
@@ -47,10 +47,10 @@ class ClawMongoAutoConfigurationTests {
     @Test
     void failsAtStartupWhenDatastoreNamesAreDuplicatedAcrossClusters() {
         contextRunner.withPropertyValues(
-                "claw.mongo.clusters.primary.uri=mongodb://127.0.0.1:27017",
-                "claw.mongo.clusters.primary.datastores.shared.database=catalog",
-                "claw.mongo.clusters.secondary.uri=mongodb://127.0.0.1:27018",
-                "claw.mongo.clusters.secondary.datastores.shared.database=sales"
+                "framework.mongo.clusters.primary.uri=mongodb://127.0.0.1:27017",
+                "framework.mongo.clusters.primary.datastores.shared.database=catalog",
+                "framework.mongo.clusters.secondary.uri=mongodb://127.0.0.1:27018",
+                "framework.mongo.clusters.secondary.datastores.shared.database=sales"
         ).run(context -> {
             assertThat(context).hasFailed();
             assertThat(context.getStartupFailure()).hasStackTraceContaining("Duplicate Mongo datastore name: shared");
@@ -60,8 +60,8 @@ class ClawMongoAutoConfigurationTests {
     @Test
     void keepsLegacyTopLevelConfigurationAsTheDefaultDatastore() {
         contextRunner.withPropertyValues(
-                "claw.mongo.auto-index=false",
-                "claw.mongo.database=legacy"
+                "framework.mongo.auto-index=false",
+                "framework.mongo.database=legacy"
         ).run(context -> {
             assertThat(context).hasNotFailed();
             MorphiaDatastoreRegistry datastores = context.getBean(MorphiaDatastoreRegistry.class);
@@ -72,10 +72,10 @@ class ClawMongoAutoConfigurationTests {
 
     @Test
     void autoIndexOverridesInheritFromTheirParent() {
-        assertThat(ClawMongoAutoConfiguration.resolveAutoIndex(null, true)).isTrue();
-        assertThat(ClawMongoAutoConfiguration.resolveAutoIndex(null, false)).isFalse();
-        assertThat(ClawMongoAutoConfiguration.resolveAutoIndex(false, true)).isFalse();
-        assertThat(ClawMongoAutoConfiguration.resolveAutoIndex(true, false)).isTrue();
+        assertThat(AtlasMongoAutoConfiguration.resolveAutoIndex(null, true)).isTrue();
+        assertThat(AtlasMongoAutoConfiguration.resolveAutoIndex(null, false)).isFalse();
+        assertThat(AtlasMongoAutoConfiguration.resolveAutoIndex(false, true)).isFalse();
+        assertThat(AtlasMongoAutoConfiguration.resolveAutoIndex(true, false)).isTrue();
     }
 
     @Test
@@ -85,8 +85,8 @@ class ClawMongoAutoConfigurationTests {
         Datastore enabled = countingDatastore(enabledCalls);
         Datastore disabled = countingDatastore(disabledCalls);
 
-        ClawMongoAutoConfiguration.initializeIndexes(enabled, true);
-        ClawMongoAutoConfiguration.initializeIndexes(disabled, false);
+        AtlasMongoAutoConfiguration.initializeIndexes(enabled, true);
+        AtlasMongoAutoConfiguration.initializeIndexes(disabled, false);
 
         assertThat(enabledCalls).hasValue(1);
         assertThat(disabledCalls).hasValue(0);

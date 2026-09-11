@@ -5,8 +5,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import java.util.ArrayList;
 import java.util.List;
 
-@ConfigurationProperties("claw.web")
-public class ClawWebProperties {
+@ConfigurationProperties("framework.web")
+public class AtlasWebProperties {
 
     private boolean enabled = true;
     private final Response response = new Response();

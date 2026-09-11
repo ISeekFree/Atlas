@@ -5,8 +5,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@ConfigurationProperties("claw.grpc.client")
-public class ClawGrpcClientProperties {
+@ConfigurationProperties("framework.grpc.client")
+public class AtlasGrpcClientProperties {
 
     private boolean enabled = true;
     private final Map<String, Channel> channels = new LinkedHashMap<>();

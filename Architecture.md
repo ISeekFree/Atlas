@@ -1,4 +1,4 @@
-# Claw SDK WebMVC Architecture
+# Atlas SDK WebMVC Architecture
 
 ## Baseline
 
@@ -32,7 +32,7 @@ Each feature module registers auto-configuration through:
 META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
 ```
 
-Consumers normally import `sdk-bom` and depend on `sdk-starter`. The BOM contains only `dependencyManagement` entries and adds no runtime code; the starter contains ordinary dependencies that aggregate all SDK feature modules. Consumers can import the BOM and select individual modules when they do not want the full starter. Feature modules are guarded by `@ConditionalOnClass` and `claw.*.enabled` properties where appropriate.
+Consumers normally import `sdk-bom` and depend on `sdk-starter`. The BOM contains only `dependencyManagement` entries and adds no runtime code; the starter contains ordinary dependencies that aggregate all SDK feature modules. Consumers can import the BOM and select individual modules when they do not want the full starter. Feature modules are guarded by `@ConditionalOnClass` and `framework.*.enabled` properties where appropriate.
 
 AI model and provider integration deliberately remains the responsibility of consuming applications rather than the framework SDK.
 
@@ -47,7 +47,7 @@ AI model and provider integration deliberately remains the responsibility of con
 The WebMVC request flow is:
 
 1. `WebAuthInterceptor` builds a `WebContext` from request headers and remote IP.
-2. If `@AuthRequired` or `claw.web.auth.required-by-default` applies, it calls `AuthService`.
+2. If `@AuthRequired` or `framework.web.auth.required-by-default` applies, it calls `AuthService`.
 3. Auth-only values such as token, admin flag, channel, and `AuthIdentity` are not fields on `WebContext`.
 4. The resolved user-visible fields are written back to `WebContext`.
 5. `WebContextCustomizer` beans let consuming applications add business attributes to `WebContext`.
@@ -67,7 +67,7 @@ Server side:
 
 Client side:
 
-- `GrpcChannelFactory` creates named channels from `claw.grpc.client.channels.*`.
+- `GrpcChannelFactory` creates named channels from `framework.grpc.client.channels.*`.
 - `GrpcClientBeanPostProcessor` injects fields annotated with `@GrpcClient`.
 - `GrpcClientAuthInterceptor` reads `WebContextHolder` and forwards token/admin-token metadata to downstream gRPC calls.
 
@@ -77,9 +77,9 @@ This gives one auth contract across WebMVC controllers and gRPC services.
 
 MongoDB:
 
-- `claw.mongo.clusters.*` defines multiple independent Mongo clusters. A cluster owns one URI/client and an explicit `datastores` map; it does not create a database or datastore named after the cluster.
-- Every `claw.mongo.clusters.<cluster>.datastores.<datastore>` entry defines its own `database` and `map-packages`. Datastore names are global and duplicate names across clusters fail application startup.
-- Legacy single-cluster fields (`claw.mongo.uri`, `database`, `map-packages`, `datastores`) still define the default cluster.
+- `framework.mongo.clusters.*` defines multiple independent Mongo clusters. A cluster owns one URI/client and an explicit `datastores` map; it does not create a database or datastore named after the cluster.
+- Every `framework.mongo.clusters.<cluster>.datastores.<datastore>` entry defines its own `database` and `map-packages`. Datastore names are global and duplicate names across clusters fail application startup.
+- Legacy single-cluster fields (`framework.mongo.uri`, `database`, `map-packages`, `datastores`) still define the default cluster.
 - `auto-index` inherits from the global Mongo setting to a cluster and then to each datastore; an explicitly configured child value overrides its parent.
 - `MongoClusterRegistry` owns cluster-name to `MongoClient` lookup.
 - `MorphiaDatastoreRegistry` owns datastore-name to Morphia `Datastore` lookup and tracks which cluster each datastore belongs to.
@@ -90,10 +90,10 @@ MongoDB:
 
 Redis:
 
-- All standalone Redis connection, timeout, SSL, and pool settings bind from `claw.redis.*`; the SDK creates the `RedisConnectionFactory` directly and does not depend on `spring.data.redis.*`.
+- All standalone Redis connection, timeout, SSL, and pool settings bind from `framework.redis.*`; the SDK creates the `RedisConnectionFactory` directly and does not depend on `spring.data.redis.*`.
 - The Redis module uses `spring-data-redis`, `lettuce-core`, and `commons-pool2` directly instead of `spring-boot-starter-data-redis`, so Boot's property-driven Redis auto-configuration is not present on the SDK classpath.
-- `ClawRedisAutoConfiguration` creates `redisTemplateWithObject`, `redisTemplate`, and `redisKey`.
-- `ClawRedisKey` centralizes key construction.
+- `AtlasRedisAutoConfiguration` creates `redisTemplateWithObject`, `redisTemplate`, and `redisKey`.
+- `AtlasRedisKey` centralizes key construction.
 
 ## Demo Validation
 
@@ -114,17 +114,17 @@ The demo app validates:
 
 | cluster | datastore | database | mapped collections |
 | --- | --- | --- | --- |
-| `primary` | `catalog` | `claw_demo_catalog` | `catalog_products`, `catalog_categories` |
-| `primary` | `audit` | `claw_demo_audit` | `audit_events`, `login_records` |
-| `secondary` | `sales` | `claw_demo_sales` | `sales_orders`, `customer_profiles` |
-| `secondary` | `archive` | `claw_demo_archive` | `archived_orders`, `archive_jobs` |
+| `primary` | `catalog` | `framework_demo_catalog` | `catalog_products`, `catalog_categories` |
+| `primary` | `audit` | `framework_demo_audit` | `audit_events`, `login_records` |
+| `secondary` | `sales` | `framework_demo_sales` | `sales_orders`, `customer_profiles` |
+| `secondary` | `archive` | `framework_demo_archive` | `archived_orders`, `archive_jobs` |
 
 Run it with:
 
 ```bash
 MONGO_PRIMARY_URI='mongodb://127.0.0.1:27017' \
 MONGO_SECONDARY_URI='mongodb://127.0.0.1:27018' \
-CLAW_MONGO_ENABLED=true mvn -pl demo -am spring-boot:run
+FRAMEWORK_MONGO_ENABLED=true mvn -pl demo -am spring-boot:run
 ```
 
 The datastore names are global routing keys and must be unique across all clusters. Every datastore is explicitly nested under the cluster whose `MongoClient` it shares. The four demo services (`CatalogProductService`, `AuditEventService`, `SalesOrderService`, and `ArchivedOrderService`) demonstrate direct constructor injection, for example:
@@ -138,9 +138,9 @@ public AuditEventService(@Qualifier("audit") Datastore datastore) {
 Index creation resolves configuration in this order:
 
 ```text
-claw.mongo.auto-index
-  -> claw.mongo.clusters.<cluster>.auto-index
-    -> claw.mongo.clusters.<cluster>.datastores.<datastore>.auto-index
+framework.mongo.auto-index
+  -> framework.mongo.clusters.<cluster>.auto-index
+    -> framework.mongo.clusters.<cluster>.datastores.<datastore>.auto-index
 ```
 
 After package mapping, startup calls Morphia `Datastore.ensureIndexes()` once for each datastore whose resolved value is `true`. The demo entities include unique, compound, descending, and TTL index annotations. Setting a datastore to `false` skips only that database's index synchronization.

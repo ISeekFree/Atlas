@@ -2,7 +2,7 @@ package com.iseekfree.common.sdk.web.context;
 
 import com.iseekfree.common.sdk.common.auth.AuthRequest;
 import com.iseekfree.common.sdk.common.auth.CookieStyleAuthService;
-import com.iseekfree.common.sdk.web.autoconfigure.ClawWebProperties;
+import com.iseekfree.common.sdk.web.autoconfigure.AtlasWebProperties;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -14,10 +14,10 @@ import java.util.StringJoiner;
 
 public class WebContextFactory {
 
-    private final ClawWebProperties properties;
+    private final AtlasWebProperties properties;
     private final List<WebContextCustomizer> customizers;
 
-    public WebContextFactory(ClawWebProperties properties, List<WebContextCustomizer> customizers) {
+    public WebContextFactory(AtlasWebProperties properties, List<WebContextCustomizer> customizers) {
         this.properties = properties;
         this.customizers = List.copyOf(customizers);
     }
