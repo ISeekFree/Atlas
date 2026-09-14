@@ -6,6 +6,7 @@ import io.grpc.ClientInterceptor;
 import io.grpc.ClientInterceptors;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.NameResolverRegistry;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 
@@ -16,6 +17,13 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class GrpcChannelFactory implements DisposableBean {
+
+    static {
+        NameResolverRegistry registry = NameResolverRegistry.getDefaultRegistry();
+        if (registry.getProviderForScheme(StaticNameResolverProvider.SCHEME) == null) {
+            registry.register(new StaticNameResolverProvider());
+        }
+    }
 
     private final AtlasGrpcClientProperties properties;
     private final List<ClientInterceptor> interceptors;

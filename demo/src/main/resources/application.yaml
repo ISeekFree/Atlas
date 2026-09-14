@@ -50,5 +50,10 @@ framework:
     client:
       channels:
         local:
-          target: 127.0.0.1:19090
+          # Target examples:
+          # - ${:static://127.0.0.1:19090}: fixed single address resolved by Atlas.
+          # - dns:///demo-service:19090: DNS or Kubernetes Service discovery.
+          # - xds:///demo-service: xDS resolver, requires xDS runtime/bootstrap.
+          # - unix:///var/run/demo.sock: Unix socket, requires transport support.
+          target: "${:static://127.0.0.1:19090}"
           plaintext: true
