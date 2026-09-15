@@ -1,6 +1,7 @@
 package com.iseekfree.common.sdk.web.context;
 
 import com.iseekfree.common.sdk.common.ctx.WebContextRequest;
+import com.iseekfree.common.sdk.common.net.ClientIp;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
@@ -39,9 +40,9 @@ public class HttpWebContextRequest implements WebContextRequest {
                 request.getRemoteAddr()
         );
         if (ip != null && ip.contains(",")) {
-            return ip.split(",")[0].trim();
+            ip = ip.split(",")[0].trim();
         }
-        return ip;
+        return ClientIp.normalize(ip);
     }
 
     @Override

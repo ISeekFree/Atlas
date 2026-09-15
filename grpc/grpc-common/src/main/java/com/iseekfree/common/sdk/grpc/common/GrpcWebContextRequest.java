@@ -1,10 +1,12 @@
 package com.iseekfree.common.sdk.grpc.common;
 
 import com.iseekfree.common.sdk.common.ctx.WebContextRequest;
+import com.iseekfree.common.sdk.common.net.ClientIp;
 import io.grpc.Grpc;
 import io.grpc.Metadata;
 import io.grpc.ServerCall;
 
+import java.net.InetSocketAddress;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
@@ -57,13 +59,16 @@ public class GrpcWebContextRequest implements WebContextRequest {
         String real = headers == null ? null : headers.get(GrpcMetadataKeys.X_REAL_IP);
         String ip = firstNonBlank(forwarded, real);
         if (ip != null && ip.contains(",")) {
-            return ip.split(",")[0].trim();
+            return ClientIp.normalize(ip.split(",")[0].trim());
         }
         if (ip != null) {
-            return ip;
+            return ClientIp.normalize(ip);
         }
         Object remoteAddress = call == null ? null : call.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
-        return remoteAddress == null ? null : remoteAddress.toString();
+        if (remoteAddress instanceof InetSocketAddress socket && socket.getAddress() != null) {
+            return ClientIp.normalize(socket.getAddress().getHostAddress());
+        }
+        return remoteAddress == null ? null : ClientIp.normalize(remoteAddress.toString());
     }
 
     private static String firstNonBlank(String... values) {
