@@ -52,8 +52,9 @@ framework:
         local:
           # Target examples:
           # - ${:static://127.0.0.1:19090}: fixed single address resolved by Atlas.
-          # - dns:///demo-service:19090: DNS or Kubernetes Service discovery.
-          # - xds:///demo-service: xDS resolver, requires xDS runtime/bootstrap.
-          # - unix:///var/run/demo.sock: Unix socket, requires transport support.
+          # - ${:demo-service.internal:19090}: no scheme defaults to static; IP and domain are supported.
+          # - ${:dns:///demo-service:19090}: DNS or Kubernetes Service discovery.
+          # - ${:xds:///demo-service}: xDS resolver included by sdk-grpc-client; requires runtime/bootstrap.
+          # - ${:unix:///var/run/demo.sock}: Unix socket, requires transport support.
           target: "${:static://127.0.0.1:19090}"
           plaintext: true

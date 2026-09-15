@@ -21,15 +21,20 @@ public final class StaticNameResolverProvider extends NameResolverProvider {
         }
         String host = targetUri.getHost();
         int port = targetUri.getPort();
-        if ((host == null || host.isBlank()) && targetUri.getAuthority() != null) {
-            HostAndPort hostAndPort = parseAuthority(targetUri.getAuthority());
+        if (host == null || host.isBlank() || port < 0) {
+            HostAndPort hostAndPort = parseTarget(targetUri);
             host = hostAndPort.host();
             port = hostAndPort.port();
         }
+        host = stripIpv6Brackets(host);
         if (host == null || host.isBlank() || port < 0) {
             throw new IllegalArgumentException("static target must be static://host:port");
         }
-        return new StaticNameResolver(targetUri.getAuthority(), host, port);
+        String authority = targetUri.getAuthority();
+        if (authority == null || authority.isBlank()) {
+            authority = formatAuthority(host, port);
+        }
+        return new StaticNameResolver(authority, host, port);
     }
 
     @Override
@@ -44,23 +49,59 @@ public final class StaticNameResolverProvider extends NameResolverProvider {
 
     @Override
     protected int priority() {
-        return 5;
+        // DNS uses priority 5. A higher priority makes static the default for
+        // targets without a scheme while explicit dns:/// and other schemes
+        // continue to select their own providers.
+        return 6;
     }
 
-    private static HostAndPort parseAuthority(String authority) {
-        int separator = authority.lastIndexOf(':');
-        if (separator <= 0 || separator == authority.length() - 1) {
-            return new HostAndPort(authority, -1);
+    private static HostAndPort parseTarget(URI targetUri) {
+        String endpoint = targetUri.getAuthority();
+        if (endpoint == null || endpoint.isBlank()) {
+            endpoint = targetUri.getPath();
         }
-        String host = authority.substring(0, separator);
-        if (host.startsWith("[") && host.endsWith("]")) {
-            host = host.substring(1, host.length() - 1);
+        if (endpoint == null) {
+            return new HostAndPort(null, -1);
         }
+        endpoint = endpoint.trim();
+        while (endpoint.startsWith("/")) {
+            endpoint = endpoint.substring(1);
+        }
+        if (endpoint.startsWith("[")) {
+            int closingBracket = endpoint.indexOf(']');
+            if (closingBracket <= 1 || closingBracket + 2 >= endpoint.length()
+                    || endpoint.charAt(closingBracket + 1) != ':') {
+                return new HostAndPort(endpoint, -1);
+            }
+            return new HostAndPort(endpoint.substring(1, closingBracket),
+                    parsePort(endpoint.substring(closingBracket + 2)));
+        }
+        int separator = endpoint.lastIndexOf(':');
+        if (separator <= 0 || separator == endpoint.length() - 1) {
+            return new HostAndPort(endpoint, -1);
+        }
+        return new HostAndPort(endpoint.substring(0, separator),
+                parsePort(endpoint.substring(separator + 1)));
+    }
+
+    private static int parsePort(String value) {
         try {
-            return new HostAndPort(host, Integer.parseInt(authority.substring(separator + 1)));
+            int port = Integer.parseInt(value);
+            return port <= 65535 ? port : -1;
         } catch (NumberFormatException ex) {
-            return new HostAndPort(host, -1);
+            return -1;
         }
+    }
+
+    private static String formatAuthority(String host, int port) {
+        return (host.indexOf(':') >= 0 ? "[" + host + "]" : host) + ":" + port;
+    }
+
+    private static String stripIpv6Brackets(String host) {
+        if (host != null && host.length() > 1 && host.startsWith("[") && host.endsWith("]")) {
+            return host.substring(1, host.length() - 1);
+        }
+        return host;
     }
 
     private record HostAndPort(String host, int port) {
@@ -73,7 +114,7 @@ public final class StaticNameResolverProvider extends NameResolverProvider {
 
         private StaticNameResolver(String authority, String host, int port) {
             this.authority = authority;
-            this.addressGroup = new EquivalentAddressGroup(InetSocketAddress.createUnresolved(host, port));
+            this.addressGroup = new EquivalentAddressGroup(new InetSocketAddress(host, port));
         }
 
         @Override

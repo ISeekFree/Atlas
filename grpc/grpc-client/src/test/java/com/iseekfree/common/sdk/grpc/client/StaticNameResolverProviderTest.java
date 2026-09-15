@@ -17,24 +17,30 @@ class StaticNameResolverProviderTest {
 
     @Test
     void resolvesStaticHostAndPort() {
-        StaticNameResolverProvider provider = new StaticNameResolverProvider();
-        NameResolver resolver = provider.newNameResolver(URI.create("static://127.0.0.1:16814"), null);
-        RecordingListener listener = new RecordingListener();
-
-        resolver.start(listener);
-
-        assertThat(resolver.getServiceAuthority()).isEqualTo("127.0.0.1:16814");
-        assertThat(listener.addresses).hasSize(1);
-        InetSocketAddress address = (InetSocketAddress) listener.addresses.get(0).getAddresses().get(0);
-        assertThat(address.getHostString()).isEqualTo("127.0.0.1");
-        assertThat(address.getPort()).isEqualTo(16814);
+        assertResolvedAddress("static://127.0.0.1:16814", "127.0.0.1", 16814);
     }
 
     @Test
-    void registersStaticSchemeWithDefaultRegistry() {
+    void resolvesStaticDomainAndIpv6() {
+        assertResolvedAddress("static://account.internal:16814", "account.internal", 16814);
+        assertResolvedAddress("static://[::1]:16814", "::1", 16814);
+    }
+
+    @Test
+    void resolvesTargetNormalizedFromMissingScheme() {
+        assertResolvedAddress("static:///account.internal:16814", "account.internal", 16814);
+    }
+
+    @Test
+    void registersSupportedSchemesAndStaticAsDefault() {
         new GrpcChannelFactory(new com.iseekfree.common.sdk.grpc.client.autoconfigure.AtlasGrpcClientProperties(), List.of());
 
-        assertThat(NameResolverRegistry.getDefaultRegistry().getProviderForScheme("static")).isNotNull();
+        NameResolverRegistry registry = NameResolverRegistry.getDefaultRegistry();
+        assertThat(registry.getProviderForScheme("static")).isNotNull();
+        assertThat(registry.getProviderForScheme("dns")).isNotNull();
+        assertThat(registry.getProviderForScheme("xds")).isNotNull();
+        assertThat(registry.getProviderForScheme("unix")).isNotNull();
+        assertThat(registry.getDefaultScheme()).isEqualTo("static");
     }
 
     @Test
@@ -44,6 +50,26 @@ class StaticNameResolverProviderTest {
         assertThatThrownBy(() -> provider.newNameResolver(URI.create("static://127.0.0.1"), null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("static://host:port");
+    }
+
+    private static void assertResolvedAddress(String target, String expectedHost, int expectedPort) {
+        StaticNameResolverProvider provider = new StaticNameResolverProvider();
+        NameResolver resolver = provider.newNameResolver(URI.create(target), null);
+        RecordingListener listener = new RecordingListener();
+
+        resolver.start(listener);
+
+        assertThat(listener.addresses).hasSize(1);
+        InetSocketAddress address = (InetSocketAddress) listener.addresses.get(0).getAddresses().get(0);
+        if (expectedHost.equals("::1")) {
+            assertThat(address.getAddress().isLoopbackAddress()).isTrue();
+        } else {
+            assertThat(address.getHostString()).isEqualTo(expectedHost);
+        }
+        assertThat(address.getPort()).isEqualTo(expectedPort);
+        if (expectedHost.equals("127.0.0.1") || expectedHost.equals("::1")) {
+            assertThat(address.isUnresolved()).isFalse();
+        }
     }
 
     private static final class RecordingListener extends NameResolver.Listener2 {

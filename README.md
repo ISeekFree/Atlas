@@ -52,6 +52,10 @@ Use Java 17:
 
 Override `AuthService` in the consuming app to connect `@AuthRequired`, WebContext, and gRPC auth to the real session/account system.
 
+## gRPC Client Targets
+
+Atlas registers `static://host:port` for a fixed address and makes `static` the default resolver. A target without a scheme, such as `127.0.0.1:19090` or `account.internal:19090`, is therefore treated as static; IPv4, domain names, and bracketed IPv6 are supported. The SDK includes the official `dns`, `xds`, and Netty `unix` providers. Service discovery uses an explicit scheme: `dns:///service:port` for DNS or Kubernetes Services, `xds:///service-name` with the xDS runtime/bootstrap, or `unix:///path/to.sock` for Unix-domain sockets when native transport support is available.
+
 ## Extension Points
 
 - Register a `WebContextCustomizer` bean to add business attributes to `WebContext`.
