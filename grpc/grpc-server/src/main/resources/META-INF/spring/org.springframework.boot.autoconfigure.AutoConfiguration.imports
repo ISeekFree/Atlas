@@ -1,1 +1,2 @@
 com.iseekfree.common.sdk.grpc.server.autoconfigure.AtlasGrpcServerAutoConfiguration
+com.iseekfree.common.sdk.grpc.server.autoconfigure.AtlasGrpcWebExceptionAutoConfiguration

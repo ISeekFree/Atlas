@@ -2,6 +2,12 @@ server:
   port: 0
 
 framework:
+  web:
+    auth:
+      # HS256 secret for the demo's JWT verifier. Atlas only signs/verifies;
+      # DemoJwtClaimsMapper owns the claim names.
+      jwt:
+        secret: ${FRAMEWORK_WEB_AUTH_JWT_SECRET:demo-sdk-dev-only-jwt-secret-change-me-0001}
   mongo:
     enabled: ${FRAMEWORK_MONGO_ENABLED:false}
     auto-index: ${FRAMEWORK_MONGO_AUTO_INDEX:true}
@@ -45,6 +51,8 @@ framework:
   grpc:
     server:
       port: 19090
+      # Inbound auth is business-owned (see grpc/DemoServerInnerAuthInterceptor);
+      # the demo reads these keys itself via @Value.
       auth:
         required: true
     client:

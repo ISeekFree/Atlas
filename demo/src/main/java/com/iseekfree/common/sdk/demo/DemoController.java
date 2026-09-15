@@ -1,8 +1,9 @@
 package com.iseekfree.common.sdk.demo;
 
 import com.iseekfree.common.sdk.grpc.client.inject.GrpcClient;
-import com.iseekfree.common.sdk.web.context.AuthRequired;
-import com.iseekfree.common.sdk.web.context.WebContext;
+import com.iseekfree.common.sdk.common.ctx.AuthRequired;
+import com.iseekfree.common.sdk.common.ctx.WebContext;
+import com.iseekfree.common.sdk.common.exception.AtlasException;
 import com.iseekfree.common.sdk.web.flux.WebContextFlux;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -52,5 +53,27 @@ public class DemoController {
     @GetMapping("/grpc")
     public String grpc(WebContext context) {
         return ClientCalls.blockingUnaryCall(localChannel, DemoGrpcService.METHOD, CallOptions.DEFAULT, "ping");
+    }
+
+    @GetMapping("/error")
+    public void error() {
+        throw new IllegalStateException("boom");
+    }
+
+    @GetMapping("/error/custom")
+    public void customError() {
+        throw new IllegalArgumentException("bad argument");
+    }
+
+    /** The unified exception with no explicit code falls back to -90. */
+    @GetMapping("/business")
+    public void businessError() {
+        throw new AtlasException("business failure");
+    }
+
+    /** The unified exception keeps an explicit business code. */
+    @GetMapping("/business/custom")
+    public void customBusinessError() {
+        throw new AtlasException(-1001, "custom business failure");
     }
 }

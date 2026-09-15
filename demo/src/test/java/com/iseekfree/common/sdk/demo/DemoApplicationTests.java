@@ -1,5 +1,7 @@
 package com.iseekfree.common.sdk.demo;
 
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +10,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Date;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -15,7 +21,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 class DemoApplicationTests {
 
-    private static final String TOKEN = "_u_=u1;_d_=app.demo;_s_=session1;_exp_=4102444800000;_perms_=demo:read";
+    private static final String JWT_SECRET = "demo-sdk-dev-only-jwt-secret-change-me-0001";
+    private static final String TOKEN = demoToken();
 
     @Autowired
     private WebApplicationContext applicationContext;
@@ -48,5 +55,42 @@ class DemoApplicationTests {
         mockMvc.perform(get("/demo/me"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(-94));
+    }
+
+    @Test
+    void uncaughtExceptionsUseTheUnifiedEnvelope() throws Exception {
+        mockMvc.perform(get("/demo/error"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(-90))
+                .andExpect(jsonPath("$.msg").value("boom"));
+
+        mockMvc.perform(get("/demo/error/custom"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(-91))
+                .andExpect(jsonPath("$.msg").value("invalid argument: bad argument"));
+    }
+
+    @Test
+    void atlasExceptionUsesTheUnifiedEnvelopeWithOptionalCode() throws Exception {
+        mockMvc.perform(get("/demo/business"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(-90))
+                .andExpect(jsonPath("$.msg").value("business failure"));
+
+        mockMvc.perform(get("/demo/business/custom"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(-1001))
+                .andExpect(jsonPath("$.msg").value("custom business failure"));
+    }
+
+    private static String demoToken() {
+        return Jwts.builder()
+                .claim("uid", "u1")
+                .claim("domain", "app.demo")
+                .claim("session", "session1")
+                .claim("perms", "demo:read")
+                .expiration(Date.from(Instant.now().plusSeconds(3600)))
+                .signWith(Keys.hmacShaKeyFor(JWT_SECRET.getBytes(StandardCharsets.UTF_8)))
+                .compact();
     }
 }

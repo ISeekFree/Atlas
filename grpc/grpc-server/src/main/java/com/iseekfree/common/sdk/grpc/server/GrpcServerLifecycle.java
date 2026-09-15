@@ -10,11 +10,10 @@ import io.grpc.health.v1.HealthCheckResponse;
 import io.grpc.protobuf.services.HealthStatusManager;
 import io.grpc.protobuf.services.ProtoReflectionService;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.SmartLifecycle;
-import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -22,15 +21,20 @@ public class GrpcServerLifecycle implements SmartLifecycle {
 
     private final AtlasGrpcServerProperties properties;
     private final Collection<BindableService> bindableServices;
-    private final List<ServerInterceptor> interceptors;
+    private final List<ServerInterceptor> globalInterceptors;
+    private final ApplicationContext applicationContext;
     private Server server;
     private boolean running;
 
-    public GrpcServerLifecycle(AtlasGrpcServerProperties properties, Collection<BindableService> bindableServices, List<ServerInterceptor> interceptors) {
+    public GrpcServerLifecycle(AtlasGrpcServerProperties properties,
+                               Collection<BindableService> bindableServices,
+                               List<ServerInterceptor> interceptors,
+                               ApplicationContext applicationContext) {
         this.properties = properties;
         this.bindableServices = bindableServices;
-        this.interceptors = new ArrayList<>(interceptors);
-        AnnotationAwareOrderComparator.sort(this.interceptors);
+        this.applicationContext = applicationContext;
+        this.globalInterceptors = GrpcInterceptorResolver.global(
+                interceptors, GrpcInterceptorResolver.serviceScoped(bindableServices));
     }
 
     @Override
@@ -39,9 +43,11 @@ public class GrpcServerLifecycle implements SmartLifecycle {
             return;
         }
         NettyServerBuilder builder = NettyServerBuilder.forPort(properties.getPort());
-        ServerInterceptor[] interceptorArray = interceptors.toArray(ServerInterceptor[]::new);
         for (BindableService service : bindableServices) {
-            builder.addService(ServerInterceptors.intercept(service, interceptorArray));
+            ServerInterceptor[] serviceInterceptors = GrpcInterceptorResolver
+                    .forService(service, globalInterceptors, applicationContext)
+                    .toArray(ServerInterceptor[]::new);
+            builder.addService(ServerInterceptors.intercept(service, serviceInterceptors));
         }
         HealthStatusManager healthStatusManager = null;
         if (properties.isHealthEnabled()) {

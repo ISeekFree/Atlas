@@ -1,7 +1,4 @@
-package com.iseekfree.common.sdk.web.context;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+package com.iseekfree.common.sdk.common.ctx;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -10,7 +7,22 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
-public class WebContext {
+/**
+ * Transport-neutral per-call state shared by HTTP, gRPC and WebSocket.
+ *
+ * <p>This is the common supertype of the three transport contexts:
+ * {@link WebContext} (HTTP), {@code com.iseekfree.common.sdk.grpc.common.GrpcContext}
+ * (gRPC) and {@code com.iseekfree.common.sdk.web.context.WebsocketContext}
+ * (WebSocket). It deliberately carries no transport handle — HTTP request/response
+ * live on {@link WebContext} — so the shared loaders, authorizers and holders can
+ * work against one type.</p>
+ *
+ * <p>Applications subclass it (or one of the transport subclasses) to add their
+ * own fields (channel, package name, device id, permissions, ...), or store them
+ * in the free-form {@link #getAttributes() attributes} map. Nothing here is
+ * auth-specific; token parsing lives in a {@link WebContextLoader}.</p>
+ */
+public class AtlasContext {
 
     private String uid;
     private String ip;
@@ -23,36 +35,40 @@ public class WebContext {
     private Instant expiredAt;
     private String appVersion;
     private String appTag;
-    private String packageName;
-    private String deviceId;
     private String simplyArgs;
     private final Map<String, Object> attributes = new LinkedHashMap<>();
-    private HttpServletRequest request;
-    private HttpServletResponse response;
-
-    public String getServerName() {
-        if (request == null) {
-            return "";
-        }
-        int serverPort = request.getServerPort();
-        if (serverPort == 80 || serverPort == 443) {
-            return request.getServerName();
-        }
-        return request.getServerName() + ":" + serverPort;
-    }
 
     public boolean isIOS() {
-        String osInfo = (nullToEmpty(os) + "/" + nullToEmpty(osVersion)).toLowerCase(Locale.ROOT);
-        return osInfo.contains("iphone") || osInfo.contains("ipad") || osInfo.contains("ipod") || osInfo.contains("ios");
+        String info = (nullToEmpty(os) + "/" + nullToEmpty(osVersion)).toLowerCase(Locale.ROOT);
+        return info.contains("iphone") || info.contains("ipad") || info.contains("ipod") || info.contains("ios");
     }
 
     public boolean isAndroid() {
-        String osInfo = (nullToEmpty(os) + "/" + nullToEmpty(osVersion)).toLowerCase(Locale.ROOT);
-        return osInfo.contains("android");
+        return (nullToEmpty(os) + "/" + nullToEmpty(osVersion)).toLowerCase(Locale.ROOT).contains("android");
     }
 
     public boolean isPC() {
         return !isIOS() && !isAndroid();
+    }
+
+    /** Copies every base field into a sibling context instance. */
+    public void copyTo(AtlasContext target) {
+        if (target == null || target == this) {
+            return;
+        }
+        target.uid = uid;
+        target.ip = ip;
+        target.os = os;
+        target.osVersion = osVersion;
+        target.language = language;
+        target.area = area;
+        target.domain = domain;
+        target.session = session;
+        target.expiredAt = expiredAt;
+        target.appVersion = appVersion;
+        target.appTag = appTag;
+        target.simplyArgs = simplyArgs;
+        target.attributes.putAll(attributes);
     }
 
     public String getUid() {
@@ -143,22 +159,6 @@ public class WebContext {
         this.appTag = appTag;
     }
 
-    public String getPackageName() {
-        return packageName;
-    }
-
-    public void setPackageName(String packageName) {
-        this.packageName = packageName;
-    }
-
-    public String getDeviceId() {
-        return deviceId;
-    }
-
-    public void setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
-    }
-
     public String getSimplyArgs() {
         return simplyArgs;
     }
@@ -175,6 +175,11 @@ public class WebContext {
         return Optional.ofNullable(attributes.get(key));
     }
 
+    public <T> Optional<T> getAttribute(String key, Class<T> type) {
+        Object value = attributes.get(key);
+        return type.isInstance(value) ? Optional.of(type.cast(value)) : Optional.empty();
+    }
+
     public void setAttribute(String key, Object value) {
         if (key == null || key.isBlank()) {
             return;
@@ -184,22 +189,6 @@ public class WebContext {
             return;
         }
         attributes.put(key, value);
-    }
-
-    public HttpServletRequest getRequest() {
-        return request;
-    }
-
-    public void setRequest(HttpServletRequest request) {
-        this.request = request;
-    }
-
-    public HttpServletResponse getResponse() {
-        return response;
-    }
-
-    public void setResponse(HttpServletResponse response) {
-        this.response = response;
     }
 
     private static String nullToEmpty(String value) {

@@ -1,9 +1,7 @@
 package com.iseekfree.common.sdk.grpc.client.autoconfigure;
 
 import com.iseekfree.common.sdk.grpc.client.GrpcChannelFactory;
-import com.iseekfree.common.sdk.grpc.client.GrpcClientAuthInterceptor;
 import com.iseekfree.common.sdk.grpc.client.inject.GrpcClientBeanPostProcessor;
-import com.iseekfree.common.sdk.web.autoconfigure.AtlasWebProperties;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -13,8 +11,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 
 import java.util.List;
 
@@ -24,13 +20,15 @@ import java.util.List;
 @EnableConfigurationProperties(AtlasGrpcClientProperties.class)
 public class AtlasGrpcClientAutoConfiguration {
 
-    @Bean
-    @Order(Ordered.HIGHEST_PRECEDENCE + 20)
-    @ConditionalOnMissingBean
-    public ClientInterceptor grpcClientAuthInterceptor(ObjectProvider<AtlasWebProperties> webProperties) {
-        return new GrpcClientAuthInterceptor(webProperties.getIfAvailable());
-    }
-
+    /**
+     * Creates the channel factory together with every business-supplied {@link ClientInterceptor}.
+     *
+     * <p>The SDK deliberately installs no auth interceptor: which HTTP header carries the caller
+     * token and which gRPC metadata key the callee reads are business contracts. Declare
+     * {@code ClientInterceptor} beans instead; they are ordered with
+     * {@link org.springframework.core.annotation.AnnotationAwareOrderComparator} and mounted on
+     * every channel.</p>
+     */
     @Bean
     @ConditionalOnMissingBean
     public GrpcChannelFactory grpcChannelFactory(AtlasGrpcClientProperties properties, List<ClientInterceptor> interceptors) {

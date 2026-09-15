@@ -19,7 +19,7 @@
     <description>Spring Boot 4 WebMVC SDK for Atlas services</description>
 
     <properties>
-        <revision>4.1.0_v011</revision>
+        <revision>4.1.0_v012</revision>
         <java.version>17</java.version>
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -27,6 +27,7 @@
         <protobuf.version>3.25.8</protobuf.version>
         <morphia.version>2.5.3</morphia.version>
         <mongodb-driver.version>5.8.0</mongodb-driver.version>
+        <jjwt.version>0.12.6</jjwt.version>
         <flatten-maven-plugin.version>1.6.0</flatten-maven-plugin.version>
     </properties>
 
@@ -69,6 +70,21 @@
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java-util</artifactId>
                 <version>${protobuf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jjwt.version}</version>
             </dependency>
 
             <dependency>

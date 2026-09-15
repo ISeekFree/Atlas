@@ -12,14 +12,14 @@
 
 | Module | Role |
 | --- | --- |
-| `common` | Shared auth contracts, exceptions, JSON helper, and response/page DTOs. |
-| `web` | WebMVC auto-configuration for `WebContext`, auth interception, response wrapping, and exception handling. |
+| `common` | Shared auth contracts, exceptions, JSON helper, error codes, and response/page DTOs. |
+| `web` | WebMVC auto-configuration for `WebContext` building/injection, response wrapping, CORS, and exception handling. HTTP auth interception is application-owned. |
 | `mongo` | MongoDB/Morphia datastore auto-configuration, package mapping, index creation, registry, and CRUD base service. |
 | `redis` | Redis properties, key helper, `RedisTemplate<String, Object>`, and `StringRedisTemplate`. |
 | `grpc` | Maven aggregation module for all gRPC support. |
 | `grpc/grpc-common` | Shared gRPC metadata keys, auth context, and string marshaller. |
-| `grpc/grpc-server` | gRPC server lifecycle, `@GrpcService` discovery, health/reflection services, and server auth interceptor. |
-| `grpc/grpc-client` | gRPC channel factory, `@GrpcClient` field injection, and client auth metadata propagation. |
+| `grpc/grpc-server` | gRPC server lifecycle, `@GrpcService` discovery (including per-service `interceptors`), and health/reflection services. Inbound auth interceptors are supplied by the consuming application. |
+| `grpc/grpc-client` | gRPC channel factory, `@GrpcClient` field injection, and business-supplied client interceptors. |
 | `starter` | Aggregates SDK modules for consumers. |
 | `bom` | Dependency management entry point for consumers. |
 | `demo` | Local validation app; it must not be deployed. |
@@ -38,24 +38,30 @@ AI model and provider integration deliberately remains the responsibility of con
 
 ## Auth And Web Flow
 
-`common` defines the auth boundary:
+`common` defines an extensible, transport-neutral context instead of a fixed auth contract:
 
-- `AuthService` verifies an `AuthRequest` and returns an `AuthIdentity`.
-- `CookieStyleAuthService` is a default demo-friendly implementation. Production apps should override `AuthService`.
-- `AuthIdentity` is shared by WebMVC and gRPC, but is not stored in `WebContext`.
+- `AtlasContext` is the per-request state shared by HTTP, gRPC and WebSocket, and the common parent of the three transport types. Applications subclass it (or a transport subclass) and register a `WebContextProvider`, then inject their subclass directly into a controller method.
+- `AtlasContext` only carries transport basics (`uid`, `ip`, `os`, `language`, `domain`, `session`, expiry, app/os headers, free-form `attributes`). Business fields such as channel, package name, device id, admin flag or permissions are not part of the SDK: a loader puts them on the application subclass or the `attributes` map.
+- Each transport ships a base context that extends `AtlasContext` and can be used directly or extended: `WebContext` (HTTP, adds the servlet request/response and is injected into a controller parameter), `GrpcContext` (gRPC, read with `GrpcContext.current()` after a server interceptor attaches it) and `WebsocketContext` (WebSocket, kept on the session attributes and re-bound per message). No transport inherits another, so the shared loaders/holders work against `AtlasContext`.
+- `WebContextRequest` abstracts the header/parameter/IP view of an incoming call; `HttpWebContextRequest` (web), `GrpcWebContextRequest` (grpc-common) and the WebSocket adapter all map onto it.
+- `WebContextLoader` parses a request into the context (token, tenant, permissions, ...). Loaders are transport-neutral, so one implementation serves every surface. `TokenResolver` is the single token-lookup entry point (header precedence plus optional `Bearer` handling).
+- `WebContextAuthorizer` is the business-owned check behind `@AuthRequired(perms = ...)`; when no bean is registered any permission check fails closed.
+- `JwtCodec` owns only the JWT crypto (the algorithm is inferred from the supplied HMAC/RSA/EC key) and returns the raw claim map; it never reads a business claim.
 
-The WebMVC request flow is:
+Tokens are JWT everywhere, but claim names are never hard-coded. Configure `framework.web.auth.jwt.secret` to let Atlas build a convenience HMAC `JwtCodec` bean and verify the token inside your `WebContextLoader`. There is no `AuthService`/`AuthIdentity`.
 
-1. `WebAuthInterceptor` builds a `WebContext` from request headers and remote IP.
-2. If `@AuthRequired` or `framework.web.auth.required-by-default` applies, it calls `AuthService`.
-3. Auth-only values such as token, admin flag, channel, and `AuthIdentity` are not fields on `WebContext`.
-4. The resolved user-visible fields are written back to `WebContext`.
-5. `WebContextCustomizer` beans let consuming applications add business attributes to `WebContext`.
-6. The resolved context is stored in `WebContextHolder` for synchronous code.
-7. `WebContextArgumentResolver` injects `WebContext` controller parameters.
-8. `WebContextFlux` carries the current `WebContext` into Reactor context for Flux pipelines.
-9. `ApiResponseAdvice` wraps JSON/string controller responses into `Response<T>` unless excluded.
-10. `GlobalExceptionHandler` converts SDK exceptions into unified `Response` payloads.
+The WebMVC request flow is (the SDK ships no HTTP auth interceptor; the application owns it, like it owns gRPC/WebSocket server auth):
+
+1. The application declares a `HandlerInterceptor`. In `preHandle` it calls the SDK's `WebContextFactory`, which builds a `WebContext` (through the registered `WebContextProvider`, or the base type) from request headers and remote IP, runs every `WebContextLoader`, and stores the result in `WebContextHolder`; `afterCompletion` clears it.
+2. The same interceptor enforces its own policy. A typical implementation honors `@AuthRequired`: `uid` must be present, the `domain` must match, and any `perms` are delegated to the `WebContextAuthorizer` (absent ⇒ deny). The demo's `DemoWebAuthInterceptor` is the reference.
+3. Token parsing, claim names and any auth-only values live entirely in the application's `WebContextLoader`; the SDK never previews a claim.
+4. `WebContextCustomizer` beans let consuming applications add business attributes to the HTTP `WebContext`.
+5. The resolved context is stored in `WebContextHolder` for synchronous code.
+6. `WebContextArgumentResolver` injects any `WebContext` subtype into controller parameters.
+7. `WebContextFlux` carries the current `WebContext` into Reactor context for Flux pipelines.
+8. `ApiResponseAdvice` wraps JSON/string controller responses into `Response<T>` unless excluded.
+9. `GlobalExceptionHandler` converts exceptions into unified `Response` payloads. `AtlasException` is the unified framework exception: `new AtlasException("msg")` answers with `code = -90` (`AtlasException.DEFAULT_CODE` = `ErrorCodes.SYSTEM_ERROR`), an explicit `new AtlasException(code, "msg")` keeps its business code; `IllegalArgumentException` is answered with `404`; every other exception is offered to the registered `ExceptionResponseResolver` beans (which now return an `ExceptionResponse` carrying the HTTP status) and finally answered with `code = -90` instead of a framework error page.
+10. `AtlasWebAutoConfiguration` registers the SDK CORS policy from `framework.web.cors.*` as a `HIGHEST_PRECEDENCE` `CorsFilter`, ahead of the auth interceptor, so preflight and error responses are decorated without any application-side CORS bean. When the WebMVC SDK and a gRPC runtime are both present, `sdk-grpc-server`'s `AtlasGrpcWebExceptionAutoConfiguration` adds a downstream gRPC (`StatusRuntimeException`) resolver (`NOT_FOUND → 404`, `UNAVAILABLE`/`DEADLINE_EXCEEDED → 503`, other → `502`, `UNAUTHENTICATED → 401`/`code -94`) (independent of `framework.grpc.server.enabled`).
 
 ## gRPC Flow
 
@@ -63,15 +69,16 @@ Server side:
 
 - Services are Spring beans annotated with `@GrpcService` and implementing `BindableService`.
 - `GrpcServerLifecycle` starts/stops a Netty gRPC server with discovered services.
-- `GrpcAuthServerInterceptor` reads auth metadata, delegates to `AuthService`, and writes the identity to `GrpcAuthContext`.
+- Every `io.grpc.ServerInterceptor` bean is mounted on all services by default, ordered with `AnnotationAwareOrderComparator`. Declare `@GrpcService(interceptors = X.class)` to scope a `ServerInterceptor` bean to one service: the bean is removed from the global set and applied only where it is declared.
+- Inbound (server-side) auth is deliberately not shipped by the SDK. The consuming application declares its own `io.grpc.ServerInterceptor` bean(s); `GrpcServerLifecycle` picks up every `ServerInterceptor` bean and chains them. Interceptors read `GrpcMetadataKeys`, run the shared `WebContextLoader` against a `GrpcWebContextRequest`, and attach the result with `GrpcContext.attach`, so a service method reads the same context as HTTP through `GrpcContext.current()`.
 
 Client side:
 
 - `GrpcChannelFactory` creates named channels from `framework.grpc.client.channels.*`.
 - `GrpcClientBeanPostProcessor` injects fields annotated with `@GrpcClient`.
-- `GrpcClientAuthInterceptor` reads `WebContextHolder` and forwards token/admin-token metadata to downstream gRPC calls.
+- Outbound (client-side) auth is deliberately not shipped by the SDK. Every `ClientInterceptor` bean is collected by `AtlasGrpcClientAutoConfiguration`, ordered with `AnnotationAwareOrderComparator`, and mounted on every channel. The consuming application decides which HTTP header carries the token and which metadata key the callee reads.
 
-This gives one auth contract across WebMVC controllers and gRPC services.
+Web, gRPC and WebSocket therefore share the `WebContext` type, `WebContextLoader`, `TokenResolver` and `GrpcMetadataKeys`, but never a fixed token-transport policy.
 
 ## Data Integrations
 
@@ -101,10 +108,10 @@ The demo app validates:
 
 - WebContext argument injection.
 - `WebContextCustomizer` business extension attributes.
-- `@AuthRequired` domain/permission checks.
+- `@AuthRequired` domain/permission checks through the business-owned `DemoWebAuthInterceptor`.
 - Unified response wrapping.
 - gRPC server/client integration.
-- Web auth metadata propagation into gRPC auth context.
+- Business-owned gRPC auth in both directions: the demo declares its own server and client interceptors.
 - Redis basic set/get/delete operations.
 - MongoDB basic save/find/delete operations against a named cluster datastore.
 

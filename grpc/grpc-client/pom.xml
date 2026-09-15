@@ -19,10 +19,6 @@
             <artifactId>sdk-grpc-common</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.iseekfree.common</groupId>
-            <artifactId>sdk-web</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
         </dependency>

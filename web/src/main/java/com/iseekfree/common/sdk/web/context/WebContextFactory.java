@@ -1,98 +1,83 @@
 package com.iseekfree.common.sdk.web.context;
 
-import com.iseekfree.common.sdk.common.auth.AuthRequest;
-import com.iseekfree.common.sdk.common.auth.CookieStyleAuthService;
+import com.iseekfree.common.sdk.common.ctx.TokenResolver;
+import com.iseekfree.common.sdk.common.ctx.AtlasContext;
+import com.iseekfree.common.sdk.common.ctx.WebContext;
+import com.iseekfree.common.sdk.common.ctx.WebContextHolder;
+import com.iseekfree.common.sdk.common.ctx.WebContextLoader;
+import com.iseekfree.common.sdk.common.ctx.WebContextProvider;
 import com.iseekfree.common.sdk.web.autoconfigure.AtlasWebProperties;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.StringJoiner;
 
+/**
+ * Builds the per-request {@link WebContext} for HTTP traffic.
+ *
+ * <p>The application supplies a {@link WebContextProvider} to decide which
+ * concrete context type is created (its own subclass or the base type) and one
+ * or more {@link WebContextLoader} beans to fill token-derived fields. The
+ * factory itself only populates transport basics (ip, locale, app/os headers,
+ * ...), so nothing auth-specific — or business-specific such as a device id or
+ * admin flag — is hard-coded here.</p>
+ */
 public class WebContextFactory {
 
     private final AtlasWebProperties properties;
+    private final WebContextProvider provider;
+    private final List<WebContextLoader> loaders;
     private final List<WebContextCustomizer> customizers;
 
-    public WebContextFactory(AtlasWebProperties properties, List<WebContextCustomizer> customizers) {
+    public WebContextFactory(AtlasWebProperties properties, WebContextProvider provider, List<WebContextLoader> loaders,
+                             List<WebContextCustomizer> customizers) {
         this.properties = properties;
+        this.provider = provider;
+        this.loaders = List.copyOf(loaders);
         this.customizers = List.copyOf(customizers);
     }
 
     public WebContext create(HttpServletRequest request, HttpServletResponse response) {
-        return WebContextHolder.current().orElseGet(() -> {
-            WebContext context = new WebContext();
-            context.setRequest(request);
-            context.setResponse(response);
-            context.setAppTag(header(request, "appTag"));
-            context.setOs(header(request, "os"));
-            context.setOsVersion(header(request, "osv"));
-            context.setAppVersion(header(request, "av"));
-            context.setPackageName(header(request, "packageName"));
-            context.setDeviceId(firstNonBlank(header(request, "deviceId"), header(request, "udid")));
-            context.setIp(resolveIp(request));
-            context.setSimplyArgs(simpleArgs(request));
-            normalizeLocale(context, request);
-            previewTokenClaims(context, request);
-            customizers.forEach(customizer -> customizer.customize(context, request, response));
-            WebContextHolder.set(context);
-            return context;
-        });
+        AtlasContext existing = WebContextHolder.currentOrNull();
+        if (existing instanceof WebContext web) {
+            return web;
+        }
+        HttpWebContextRequest contextRequest = new HttpWebContextRequest(request);
+        WebContext created = provider == null ? new WebContext() : provider.create(contextRequest);
+        if (created == null) {
+            created = new WebContext();
+        }
+        final WebContext context = created;
+        context.setRequest(request);
+        context.setResponse(response);
+        context.setAppTag(header(request, "appTag"));
+        context.setOs(header(request, "os"));
+        context.setOsVersion(header(request, "osv"));
+        context.setAppVersion(header(request, "av"));
+        context.setIp(contextRequest.remoteIp());
+        context.setSimplyArgs(simpleArgs(request));
+        normalizeLocale(context, request);
+        for (WebContextLoader loader : loaders) {
+            loader.load(context, contextRequest);
+        }
+        customizers.forEach(customizer -> customizer.customize(context, request, response));
+        WebContextHolder.set(context);
+        return context;
     }
 
-    public AuthRequest createAuthRequest(WebContext context, HttpServletRequest request) {
-        AuthToken token = resolveAuthToken(request);
-        AuthRequest.Builder builder = AuthRequest.builder()
-                .domain(context.getDomain())
-                .appTag(context.getAppTag())
-                .ip(context.getIp())
-                .attribute("deviceId", context.getDeviceId());
-        if (token != null) {
-            builder.token(token.value()).admin(token.admin());
-        }
-        return builder.build();
+    /** Resolves the raw token using the configured header precedence. */
+    public TokenResolver.Token resolveToken(HttpServletRequest request) {
+        return TokenResolver.resolve(
+                new HttpWebContextRequest(request),
+                properties.getAuth().getAdminTokenHeaders(),
+                properties.getAuth().getTokenHeaders()
+        );
     }
 
-    private void previewTokenClaims(WebContext context, HttpServletRequest request) {
-        AuthToken token = resolveAuthToken(request);
-        if (token != null) {
-            fillFromToken(context, token.value());
-        }
-    }
-
-    private AuthToken resolveAuthToken(HttpServletRequest request) {
-        for (String header : properties.getAuth().getAdminTokenHeaders()) {
-            String token = header(request, header);
-            if (token != null && !token.isBlank()) {
-                return new AuthToken(token, true);
-            }
-        }
-        for (String header : properties.getAuth().getTokenHeaders()) {
-            String token = header(request, header);
-            if (token != null && !token.isBlank()) {
-                return new AuthToken(token, false);
-            }
-        }
-        return null;
-    }
-
-    private void fillFromToken(WebContext context, String token) {
-        Map<String, String> values = CookieStyleAuthService.parse(CookieStyleAuthService.stripBearer(token));
-        context.setUid(firstNonBlank(values.get(CookieStyleAuthService.UID), values.get("uid"), values.get("userId"), values.get("sub")));
-        context.setDomain(firstNonBlank(values.get(CookieStyleAuthService.DOMAIN), values.get("domain")));
-        context.setSession(firstNonBlank(values.get(CookieStyleAuthService.SESSION), values.get("session"), values.get("sid")));
-        String expires = firstNonBlank(values.get(CookieStyleAuthService.EXPIRES_AT), values.get("exp"), values.get("expiresAt"));
-        if (expires != null) {
-            try {
-                long raw = Long.parseLong(expires);
-                context.setExpiredAt(Instant.ofEpochMilli(raw < 10_000_000_000L ? raw * 1000L : raw));
-            } catch (NumberFormatException ignored) {
-                // Token preview is best effort; AuthService performs authoritative validation.
-            }
-        }
+    public void clear() {
+        WebContextHolder.clear();
     }
 
     private void normalizeLocale(WebContext context, HttpServletRequest request) {
@@ -103,20 +88,6 @@ public class WebContextFactory {
         String[] parts = normalized.split("_");
         context.setLanguage(parts.length > 0 ? parts[0].toLowerCase(Locale.ROOT) : "en");
         context.setArea(parts.length > 1 ? parts[1].toLowerCase(Locale.ROOT) : "");
-    }
-
-    private static String resolveIp(HttpServletRequest request) {
-        String ip = firstNonBlank(
-                header(request, "x-forwarded-for"),
-                header(request, "x-real-ip"),
-                header(request, "Proxy-Client-IP"),
-                header(request, "WL-Proxy-Client-IP"),
-                request.getRemoteAddr()
-        );
-        if (ip != null && ip.contains(",")) {
-            return ip.split(",")[0].trim();
-        }
-        return ip;
     }
 
     private static String simpleArgs(HttpServletRequest request) {
@@ -132,15 +103,4 @@ public class WebContextFactory {
         return request.getHeader(name);
     }
 
-    private static String firstNonBlank(String... values) {
-        for (String value : values) {
-            if (value != null && !value.isBlank()) {
-                return value;
-            }
-        }
-        return null;
-    }
-
-    private record AuthToken(String value, boolean admin) {
-    }
 }
