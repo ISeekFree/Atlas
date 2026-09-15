@@ -1,5 +1,13 @@
 package com.iseekfree.common.sdk.common.web;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+/**
+ * The unified {@code {code,msg,data}} envelope. {@code null} members are omitted
+ * from the serialized JSON (a failure carries no {@code data}, a success never
+ * needs a {@code null} {@code msg}), so clients never see {@code "data":null}.
+ */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Response<T> {
 
     private int code;

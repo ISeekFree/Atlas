@@ -1,5 +1,6 @@
 package com.iseekfree.common.sdk.web.autoconfigure;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iseekfree.common.sdk.common.auth.JwtCodec;
 import com.iseekfree.common.sdk.common.ctx.WebContextAuthorizer;
@@ -20,6 +21,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
@@ -57,6 +59,21 @@ public class AtlasWebAutoConfiguration {
     @ConditionalOnMissingBean
     public ObjectMapper defaultObjectMapper() {
         return Jsons.OBJECT_MAPPER;
+    }
+
+    /**
+     * Makes the Spring MVC Jackson mapper (Jackson 3 by default in Spring Boot 4)
+     * omit {@code null} members, so every controller response matches the
+     * {@link com.iseekfree.common.sdk.common.web.Response} envelope and never
+     * serializes {@code "field":null}. Applications can override it with their
+     * own {@link JsonMapperBuilderCustomizer}.
+     */
+    @Bean
+    @ConditionalOnClass(JsonMapperBuilderCustomizer.class)
+    @ConditionalOnMissingBean(name = "atlasJsonNullOmissionCustomizer")
+    public JsonMapperBuilderCustomizer atlasJsonNullOmissionCustomizer() {
+        return builder -> builder.changeDefaultPropertyInclusion(
+                inclusion -> inclusion.withValueInclusion(JsonInclude.Include.NON_NULL));
     }
 
     /**

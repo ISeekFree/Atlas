@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.List;
 
@@ -19,13 +21,14 @@ import java.util.List;
  * Converts uncaught MVC exceptions into the unified {@code {code,msg,data}}
  * envelope so a frontend never receives a framework default error page.
  *
- * <p>{@link AtlasException} keeps its own business code. Any other exception is
- * offered to the registered {@link ExceptionResponseResolver} beans first; the
- * SDK's own default policy then maps {@link IllegalArgumentException} to
- * {@code 404} and answers everything else with {@code code = -90}. A consuming
- * application can replace the policy by declaring its own
- * {@code @RestControllerAdvice} with a higher precedence, or by registering
- * resolver beans (which run before the SDK default).</p>
+ * <p>{@link AtlasException} keeps its own business code. A missing static
+ * resource or handler (for example {@code /favicon.ico}) is answered with an
+ * ordinary {@code 404} without an error log. Any other exception is offered to
+ * the registered {@link ExceptionResponseResolver} beans first; the SDK's own
+ * default policy then answers with {@code code = -90}. A consuming application
+ * can replace the policy by declaring its own {@code @RestControllerAdvice}
+ * with a higher precedence, or by registering resolver beans (which run before
+ * the SDK default).</p>
  */
 @RestControllerAdvice
 @Order(Ordered.LOWEST_PRECEDENCE)
@@ -46,6 +49,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AtlasException.class)
     public ResponseEntity<Response<Void>> handleAtlasException(AtlasException ex) {
         return ResponseEntity.ok(Response.failure(ex.getCode(), ex.getMessage()));
+    }
+
+    /**
+     * A request that matches no controller and no static resource is an ordinary
+     * {@code 404}, not a server error: answer with the unified envelope and keep
+     * it out of the error log so static-asset misses (favicon, source maps, ...)
+     * stay quiet.
+     */
+    @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
+    public ResponseEntity<Response<Void>> handleNotFound(Exception ex, HttpServletRequest request) {
+        log.debug("No resource or handler for {} {}", request.getMethod(), request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Response.failure(HttpStatus.NOT_FOUND.value(), "Not found"));
     }
 
     @ExceptionHandler(Exception.class)

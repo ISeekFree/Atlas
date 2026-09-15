@@ -54,7 +54,8 @@ class DemoApplicationTests {
 
         mockMvc.perform(get("/demo/me"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(-94));
+                .andExpect(jsonPath("$.code").value(-94))
+                .andExpect(jsonPath("$.data").doesNotExist());
     }
 
     @Test
@@ -81,6 +82,15 @@ class DemoApplicationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(-1001))
                 .andExpect(jsonPath("$.msg").value("custom business failure"));
+    }
+
+    @Test
+    void missingStaticResourceIsAPlainNotFound() throws Exception {
+        mockMvc.perform(get("/favicon.ico"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404))
+                .andExpect(jsonPath("$.msg").value("Not found"))
+                .andExpect(jsonPath("$.data").doesNotExist());
     }
 
     private static String demoToken() {
